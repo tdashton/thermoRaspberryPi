@@ -21,3 +21,6 @@ def writeToDatasource(temp = 0, date = datetime.datetime.now(), sensorName = 'un
     db.query("INSERT INTO log (value, datetime, fk_sensor) VALUES ({0}, '{1}', '{2}')"
         .format(temp, date, sensorName))
 
+def close():
+    global db
+    db.close()
