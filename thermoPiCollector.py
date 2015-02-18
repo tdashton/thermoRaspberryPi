@@ -5,8 +5,6 @@ import socket
 import string
 import collectorMysql
 
-f = open('log.txt', 'a', 1)
-
 HOST = ''                 # Symbolic name meaning all available interfaces
 PORT = 2020               # Arbitrary non-privileged port
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -32,9 +30,8 @@ while 1:
     collectorMysql.connectToDatasource()
     collectorMysql.writeToDatasource(temp, timestamp, sensorName)
 
-    f.write(data)
     if not data: break
     #conn.sendall(data)
 
+collectorMysql.close()
 conn.close()
-f.close()
