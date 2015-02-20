@@ -18,8 +18,12 @@ def connectToDatasource():
 
 def writeToDatasource(temp = 0, date = datetime.datetime.now(), sensorName = 'unknown'):
     connectToDatasource()
-    db.query("INSERT INTO log (value, datetime, fk_sensor) VALUES ({0}, '{1}', '{2}')"
-        .format(temp, date, sensorName))
+    try:
+        db.query("INSERT INTO logs (value, datetime, fk_sensor) VALUES ({0}, '{1}', '{2}')"
+            .format(temp, date, sensorName))
+    except _mysql_exceptions.ProgrammingError:
+        print "error in query with parameters: {} {} {} ".format(temp, date, sensorName)
+        pass
 
 def close():
     global db
