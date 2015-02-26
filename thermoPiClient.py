@@ -7,8 +7,8 @@ import string
 import sys
 import time
 
-HOST = 'localhost'
-PORT = 3030
+HOST = '192.168.0.200'
+PORT = 2020
 
 w1_path = "/sys/bus/w1/devices/{0}/w1_slave"
 sensors = ["10-000802bcf635", "10-000802b5535b"]
