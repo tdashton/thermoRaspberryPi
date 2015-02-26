@@ -21,7 +21,7 @@ def writeToDatasource(temp = 0, date = datetime.datetime.now(), sensorName = 'un
     try:
         db.query("INSERT INTO logs (value, datetime, fk_sensor) VALUES ({0}, '{1}', '{2}')"
             .format(temp, date, sensorName))
-    except _mysql_exceptions.ProgrammingError:
+    except MySQLdb.ProgrammingError:
         print "error in query with parameters: {} {} {} ".format(temp, date, sensorName)
         pass
 
