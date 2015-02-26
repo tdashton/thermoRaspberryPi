@@ -60,5 +60,5 @@ while True:
 		temp = string.rsplit(data, '=', 1)[1]
 		wsock.send('0|{0}|{1}|{2}'.format(datetime.datetime.now(), sensor, temp))
 
-	time.sleep(10)
+	time.sleep(30)
 
