@@ -50,7 +50,7 @@ class threadedServer (threading.Thread):
 
         while 1:
             data = conn.recv(1024)
-            logging.debug(data)
+            # logging.debug(data)
             parsed = string.split(data, '|')
             parsed[-1] = parsed[-1].strip()
             if parsed[0] == '0':
@@ -66,7 +66,7 @@ class threadedServer (threading.Thread):
             collectorMysql.connectToDatasource()
             collectorMysql.writeToDatasource(temp, timestamp, sensorName)
             if not data: break
-            #conn.sendall(data)
+            # conn.sendall(data)
 
         logging.debug("Worker closing port {0}".format(self.listenPort))
         self.serverSocket.close()
@@ -77,11 +77,12 @@ while 1:
     logging.debug("processing request from {0} {1}.".format(addr[0], addr[1]))
     data = conn.recv(128) # receive inital connect request
     logging.debug("data: " + data)
+
     if data.strip() == "CONNECT CMD": # client wants to connect and perform a command
         port = PORT_RANGE.pop()
         conn.send("CONNECT ACK\nREADY\n\n")
 
-    if data.strip() == "CONNECT LOG": # client wants to connect and send logs
+    elif data.strip() == "CONNECT LOG": # client wants to connect and send logs
         port = PORT_RANGE.pop()
         logging.debug("port: ".format(port))
         conn.send("CONNECT ACK\nNEGOTIATE:{0}\n\n".format(port))
@@ -91,6 +92,5 @@ while 1:
     else:
         conn.send("WHA?")
 
-    time.sleep(1)
     conn.shutdown(socket.SHUT_RDWR)
     conn.close()
