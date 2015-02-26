@@ -1,0 +1,22 @@
+client -> collector 2020
+CONNECT\n\n
+
+collector -> client
+CONNECT ACK\n
+NEGOTIATE 2021\n\n
+
+client -> collector 2021
+CONNECT
+
+collector -> client
+CONNECT ACK\n
+READY
+
+
+
+
+client 
+COMMAND:[DATA|CONTROL]
+
+DATA -> sending collection data 
+CONTROL -> request to control 
