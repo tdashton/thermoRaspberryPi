@@ -5,7 +5,6 @@ import logging
 import socket
 import string
 import threading
-import time
 import collectorMysql
 
 HOST = ''                 # Symbolic name meaning all available interfaces
@@ -79,7 +78,6 @@ while 1:
     logging.debug("data: " + data)
 
     if data.strip() == "CONNECT CMD": # client wants to connect and perform a command
-        port = PORT_RANGE.pop()
         conn.send("CONNECT ACK\nREADY\n\n")
 
     elif data.strip() == "CONNECT LOG": # client wants to connect and send logs
