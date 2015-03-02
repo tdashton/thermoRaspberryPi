@@ -46,7 +46,7 @@ def negotiate_connection(addr, port):
 def create_socket(addr, port):
 	global wsock
 	port = negotiate_connection(addr, port)
-	time.sleep(1)
+	# time.sleep(1)
 	wsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	wsock.connect((addr, port))
 
@@ -61,5 +61,5 @@ while True:
 		wsock.send('0|{0}|{1}|{2}'.format(datetime.datetime.now(), sensor, temp))
 		data = wsock.recv(128)
 
-	time.sleep(30)
+	time.sleep(60)
 
