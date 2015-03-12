@@ -14,6 +14,8 @@ GPIO.setup(BCIM_ID, GPIO.OUT)
 serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 serverSocket.bind((HOST, MAIN_PORT))
 logging.basicConfig(filename='controller.log', level=logging.DEBUG)
+stringStatus = "STATUS:{0} {1}"
+
 
 '''
 for the main server
@@ -34,10 +36,10 @@ while 1:
 
     if data.strip() == "CMD TOGGLE": # client wants to connect and perform a command
         GPIO.output(17, not GPIO.input(BCIM_ID))
-        conn.send("STATUS: {0} {1}".format(BCIM_ID, GPIO.input(BCIM_ID)))
+        conn.send(stringStatus.format(BCIM_ID, GPIO.input(BCIM_ID)))
 
     elif data.strip() == "CMD STATUS": # client wants to connect and perform a command
-        conn.send("STATUS: {0} {1}".format(BCIM_ID, GPIO.input(BCIM_ID)))
+        conn.send(stringStatus.format(BCIM_ID, GPIO.input(BCIM_ID)))
 
     else:
         conn.send("WHA?")

@@ -82,7 +82,7 @@ while 1:
 
     elif data.strip() == "CONNECT LOG": # client wants to connect and send logs
         port = PORT_RANGE.pop()
-        logging.debug("port: ".format(port))
+        logging.debug("port: {0}".format(port))
         server = threadedServer(port)
         server.start()
         conn.send("CONNECT ACK\nNEGOTIATE:{0}\n\n".format(port))
