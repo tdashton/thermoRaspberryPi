@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import ConfigParser
 import datetime
 import logging
 import socket
@@ -7,8 +8,12 @@ import string
 import sys
 import time
 
-HOST = '192.168.0.200'
-PORT = 2020
+
+config = ConfigParser.SafeConfigParser({'host': '', 'port': 2020})
+config.read('config/client.cfg')
+
+HOST = config.get('main', 'host')
+PORT = config.getint('main', 'port')
 
 w1_path = "/sys/bus/w1/devices/{0}/w1_slave"
 sensors = ["10-000802bcf635", "10-000802b5535b"]

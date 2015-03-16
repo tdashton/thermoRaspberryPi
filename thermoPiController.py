@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import configParser
+import datetime
 import logging
 import RPi.GPIO as GPIO
 import socket
@@ -37,6 +39,7 @@ while 1:
     if data.strip() == "CMD TOGGLE": # client wants to connect and perform a command
         GPIO.output(17, not GPIO.input(BCIM_ID))
         conn.send(stringStatus.format(BCIM_ID, GPIO.input(BCIM_ID)))
+        logging.debug(datetime.datetime.now() + " " + stringStatus.format(BCIM_ID, GPIO.input(BCIM_ID)))
 
     elif data.strip() == "CMD STATUS": # client wants to connect and perform a command
         conn.send(stringStatus.format(BCIM_ID, GPIO.input(BCIM_ID)))

@@ -1,12 +1,16 @@
 #!/opt/bin/python
 
+import ConfigParser
 import MySQLdb
 import datetime
 
-username = "temp"
-password = "temp"
-host = "localhost"
-dbName = "temperature"
+config = ConfigParser.RawConfigParser()
+config.read('config/collector.cfg')
+
+username = config.get('mysql', 'username')
+password = config.get('mysql', 'password')
+host = config.get('mysql', 'host')
+dbName = config.get('mysql', 'dbName')
 
 db = None
 
@@ -22,7 +26,7 @@ def writeToDatasource(temp = 0, date = datetime.datetime.now(), sensorName = 'un
         db.query("INSERT INTO logs (value, datetime, fk_sensor) VALUES ({0}, '{1}', '{2}')"
             .format(temp, date, sensorName))
     except MySQLdb.ProgrammingError:
-        print "error in query with parameters: {} {} {} ".format(temp, date, sensorName)
+        print "error in query with parameters: {0} {1} {2} ".format(temp, date, sensorName)
         pass
 
 def close():

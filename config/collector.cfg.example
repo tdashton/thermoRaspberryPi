@@ -1,0 +1,8 @@
+[mysql]
+username = configValue
+password = configValue
+host = configValue
+dbName = configValue
+
+[file]
+filename = temp.log
