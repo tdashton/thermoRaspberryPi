@@ -12,3 +12,7 @@ data to the specified data source.
 ## Client 
 The client is configured and started on the RaspberryPi / server reading the
 temperatures and sends the data it collects to the Collector.
+
+## Collector
+to be done. To allow two way communication between the client(s) and the server
+so the relay to control the thermostat can be toggled.
