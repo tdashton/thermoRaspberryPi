@@ -1,6 +1,7 @@
 #!/opt/bin/python
 
 # Echo server program
+import hashlib
 import logging
 import socket
 import string
@@ -19,6 +20,8 @@ logging.basicConfig(filename='collector.log', level=logging.DEBUG)
 '''
 for the main server
 '''
+
+
 def init_server_socket():
     logging.info("server listening on {0}".format(MAIN_PORT))
     serverSocket.listen(2)
@@ -27,14 +30,18 @@ def init_server_socket():
 '''
 the server logic, does the actual work
 '''
+
+
 class threadedServer (threading.Thread):
 
     serverSocket = None
     listenPort = None
+    h = None
 
     def __init__(self, listenPort):
         threading.Thread.__init__(self)
         self.listenPort = listenPort
+        self.h = hashlib.new('md5')
         pass
 
     def initial_setup(self):
@@ -64,8 +71,11 @@ class threadedServer (threading.Thread):
 
             collectorMysql.connectToDatasource()
             collectorMysql.writeToDatasource(temp, timestamp, sensorName)
-            if not data: break
-            # conn.sendall(data)
+            if not data:
+                break
+            self.h.update(data)
+
+            conn.sendall(self.h.hexdigest())
 
         logging.debug("Worker closing port {0}".format(self.listenPort))
         self.serverSocket.close()
@@ -74,13 +84,13 @@ class threadedServer (threading.Thread):
 while 1:
     conn, addr = init_server_socket()
     logging.debug("processing request from {0} {1}.".format(addr[0], addr[1]))
-    data = conn.recv(128) # receive inital connect request
+    data = conn.recv(128)  # receive inital connect request
     logging.debug("data: " + data)
 
-    if data.strip() == "CONNECT CMD": # client wants to connect and perform a command
+    if data.strip() == "CONNECT CMD":  # client wants to connect and perform a command
         conn.send("CONNECT ACK\nREADY\n\n")
 
-    elif data.strip() == "CONNECT LOG": # client wants to connect and send logs
+    elif data.strip() == "CONNECT LOG":  # client wants to connect and send logs
         port = PORT_RANGE.pop()
         logging.debug("port: {0}".format(port))
         server = threadedServer(port)

@@ -62,11 +62,14 @@ open_socket(HOST, PORT)
 
 while True:
     for sensor in sensors:
+        # 24 00 4b 46 ff ff 0e 10 3d : crc=3d YES
+        # 24 00 4b 46 ff ff 0e 10 3d t=17875
         wfile = open(w1_path.format(sensor), 'r')
         data = wfile.read()
         wfile.close()
         temp = string.rsplit(data, '=', 1)[1]
         wsock.send('0|{0}|{1}|{2}'.format(datetime.datetime.now(), sensor, temp))
-        # data = wsock.recv(128)
+        data = wsock.recv(128)
+        print "server acknowledge: {0}".format(data)
 
     time.sleep(60)
