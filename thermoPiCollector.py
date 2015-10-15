@@ -50,6 +50,12 @@ class threadedServer (threading.Thread):
         self.h = hashlib.new('md5')
         pass
 
+    def __del__(self):
+        print "cowardly dying..."
+        # TODO: for some reason the threads are never deallocated until the main
+        # process is killed... maybe setDaemon()
+        pass
+
     def initial_setup(self):
         self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.serverSocket.bind((HOST, self.listenPort))
@@ -57,7 +63,17 @@ class threadedServer (threading.Thread):
         logging.info('worker listening on {0}'.format(self.listenPort))
         return self.serverSocket.accept()
 
-    def listen_loop(self):
+    def run(self):
+        conn, addr = self.initial_setup()
+
+        #  TODO non blocking: https://docs.python.org/2/howto/sockets.html#non-blocking-sockets
+        mode = conn.recv(128)
+        if mode.strip() == "CMD":
+            self.clientCommand = True
+
+        elif mode.strip() == "LOG":
+            pass
+
         while 1:
             data = conn.recv(1024)
             # logging.debug(data)
@@ -71,51 +87,34 @@ class threadedServer (threading.Thread):
             else:
                 logging.debug("proto not recognized:")
                 logging.debug(parsed)
+                print "done"
                 break
 
             payload = self.h.hexdigest()
+            if self.commandQueue is not None:
+                print "checking queue"
+                try:
+                    queueValue = self.commandQueue.get(False, 0)
+                    print("got from queue: {0}".format(queueValue))
+                    payload += queueValue
+
+                except Queue.Empty:
+                    pass
 
             collectorMysql.connectToDatasource()
             collectorMysql.writeToDatasource(temp, timestamp, sensorName)
 
             self.h.update(data)
-
-            if self.commandQueue is not None:
-                try:
-                    queueValue = self.commandQueue.get(False)
-                    logging.debug("got from queue: {0}".format(queueValue))
-                    payload += queueValue
-                    break
-                except Queue.Empty:
-                    pass
-
             conn.sendall(payload)
 
             if not data:
                 break
 
-        logging.debug("Worker closing port {0}".format(self.listenPort))
         self.serverSocket.close()
         PORT_RANGE.append(self.listenPort)
-
-    def run(self):
-        conn, addr = self.initial_setup()
-
-        netBuffer = []
-        mode = ''
-        while len(mode < 3):
-            logging.debug("inital receipt on thread {0}".format(self.listenPort))
-            netBuffer.append(conn.recv(128))
-            mode.join(netBuffer)
-
-        if mode.strip() == "CMD":
-            self.clientCommand = True
-
-        elif mode.strip() == "LOG":
-            pass
-
-        # start zee loop
-        self.listen_loop()
+        logging.debug("Worker closing port {0}".format(self.listenPort))
+        self._Thread__stop()
+        return
 
 
 while 1:
@@ -124,6 +123,7 @@ while 1:
     data = conn.recv(128)  # receive inital connect request
     logging.debug("data: " + data)
     threadNumber = len(serverThreads)
+
     if len(PORT_RANGE) == 0:
         conn.send("NO_PORTS")  # sorry, no more ports, threads are all running.
 
@@ -135,21 +135,22 @@ while 1:
     elif data.strip() == "CONNECT LOG":  # compatibility
         port = PORT_RANGE.pop()
         logging.debug("threadNumber: {1} port: {0}".format(port, threadNumber))
-        serverThreads[threadNumber].append(threadedServer(port))
+        serverThreads.append(threadedServer(port))
         serverThreads[threadNumber].start()
         conn.send("CONNECT ACK\nNEGOTIATE:{0}\n\n".format(port))
 
     elif data.strip() == "CONNECT":  # connect, send port, and let the client tell threaded server was es kann.
         port = PORT_RANGE.pop()
-        q = Queue()
+        q = Queue.Queue()
         logging.debug("threadNumber: {1} port: {0}".format(port, threadNumber))
-        serverThreads[threadNumber].append(threadedServer(port))
+        serverThreads.append(threadedServer(port, q))
         serverThreads[threadNumber].start()
         conn.send("CONNECT ACK\nNEGOTIATE:{0}\n\n".format(port))
 
     else:
         for mThread in serverThreads:
-            mThread.queue.put("something in the queue!")
+            mThread.commandQueue.put("something in the queue!")
+            print "put something in queue"
         conn.send("WHA?")
 
     conn.shutdown(socket.SHUT_RDWR)
