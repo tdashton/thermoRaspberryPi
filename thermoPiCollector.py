@@ -7,11 +7,13 @@ import socket
 import string
 import threading
 import collectorMysql
+import Queue
 
 HOST = ''                 # Symbolic name meaning all available interfaces
 MAIN_PORT = 2020          # Arbitrary non-privileged port for connection negotiation
 # (re)use following range of ports for establishing communication channels
 PORT_RANGE = [2021, 2022, 2023, 2024, 2025]
+serverThreads = []
 
 serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 serverSocket.bind((HOST, MAIN_PORT))
@@ -36,10 +38,14 @@ class threadedServer (threading.Thread):
 
     serverSocket = None
     listenPort = None
+    commandQueue = None
+    clientCommand = False  # can the client receive GPIO commands
     h = None
 
-    def __init__(self, listenPort):
+    def __init__(self, listenPort, commandQueue=None):
         threading.Thread.__init__(self)
+        if commandQueue is not None:
+            self.commandQueue = commandQueue
         self.listenPort = listenPort
         self.h = hashlib.new('md5')
         pass
@@ -51,9 +57,7 @@ class threadedServer (threading.Thread):
         logging.info('worker listening on {0}'.format(self.listenPort))
         return self.serverSocket.accept()
 
-    def run(self):
-        conn, addr = self.initial_setup()
-
+    def listen_loop(self):
         while 1:
             data = conn.recv(1024)
             # logging.debug(data)
@@ -69,35 +73,83 @@ class threadedServer (threading.Thread):
                 logging.debug(parsed)
                 break
 
+            payload = self.h.hexdigest()
+
             collectorMysql.connectToDatasource()
             collectorMysql.writeToDatasource(temp, timestamp, sensorName)
-            if not data:
-                break
+
             self.h.update(data)
 
-            conn.sendall(self.h.hexdigest())
+            if self.commandQueue is not None:
+                try:
+                    queueValue = self.commandQueue.get(False)
+                    logging.debug("got from queue: {0}".format(queueValue))
+                    payload += queueValue
+                    break
+                except Queue.Empty:
+                    pass
+
+            conn.sendall(payload)
+
+            if not data:
+                break
 
         logging.debug("Worker closing port {0}".format(self.listenPort))
         self.serverSocket.close()
         PORT_RANGE.append(self.listenPort)
+
+    def run(self):
+        conn, addr = self.initial_setup()
+
+        netBuffer = []
+        mode = ''
+        while len(mode < 3):
+            logging.debug("inital receipt on thread {0}".format(self.listenPort))
+            netBuffer.append(conn.recv(128))
+            mode.join(netBuffer)
+
+        if mode.strip() == "CMD":
+            self.clientCommand = True
+
+        elif mode.strip() == "LOG":
+            pass
+
+        # start zee loop
+        self.listen_loop()
+
 
 while 1:
     conn, addr = init_server_socket()
     logging.debug("processing request from {0} {1}.".format(addr[0], addr[1]))
     data = conn.recv(128)  # receive inital connect request
     logging.debug("data: " + data)
+    threadNumber = len(serverThreads)
+    if len(PORT_RANGE) == 0:
+        conn.send("NO_PORTS")  # sorry, no more ports, threads are all running.
 
+    # compatibility
     if data.strip() == "CONNECT CMD":  # client wants to connect and perform a command
         conn.send("CONNECT ACK\nREADY\n\n")
 
-    elif data.strip() == "CONNECT LOG":  # client wants to connect and send logs
+    # compatibility
+    elif data.strip() == "CONNECT LOG":  # compatibility
         port = PORT_RANGE.pop()
-        logging.debug("port: {0}".format(port))
-        server = threadedServer(port)
-        server.start()
+        logging.debug("threadNumber: {1} port: {0}".format(port, threadNumber))
+        serverThreads[threadNumber].append(threadedServer(port))
+        serverThreads[threadNumber].start()
+        conn.send("CONNECT ACK\nNEGOTIATE:{0}\n\n".format(port))
+
+    elif data.strip() == "CONNECT":  # connect, send port, and let the client tell threaded server was es kann.
+        port = PORT_RANGE.pop()
+        q = Queue()
+        logging.debug("threadNumber: {1} port: {0}".format(port, threadNumber))
+        serverThreads[threadNumber].append(threadedServer(port))
+        serverThreads[threadNumber].start()
         conn.send("CONNECT ACK\nNEGOTIATE:{0}\n\n".format(port))
 
     else:
+        for mThread in serverThreads:
+            mThread.queue.put("something in the queue!")
         conn.send("WHA?")
 
     conn.shutdown(socket.SHUT_RDWR)
