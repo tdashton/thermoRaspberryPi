@@ -14,20 +14,25 @@ dbName = config.get('mysql', 'dbName')
 
 db = None
 
+
 def connectToDatasource():
     global db
-    if db == None:
-        db = MySQLdb.connect(user = username, passwd = password, host = host, db = dbName)
+    if db is None:
+        db = MySQLdb.connect(user=username, passwd=password, host=host, db=dbName)
         print "connecting to db"
 
-def writeToDatasource(temp = 0, date = datetime.datetime.now(), sensorName = 'unknown'):
+
+def writeToDatasource(temp=0, date=datetime.datetime.now(), sensorName='unknown'):
     connectToDatasource()
     try:
-        db.query("INSERT INTO logs (value, datetime, fk_sensor) VALUES ({0}, '{1}', '{2}')"
+        db.query(
+            "INSERT INTO logs (value, datetime, fk_sensor) VALUES ({0}, '{1}', '{2}')"
             .format(temp, date, sensorName))
+
     except MySQLdb.ProgrammingError:
         print "error in query with parameters: {0} {1} {2} ".format(temp, date, sensorName)
         pass
+
 
 def close():
     global db
