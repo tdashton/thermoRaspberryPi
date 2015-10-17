@@ -134,8 +134,9 @@ while 1:
     # compatibility
     elif data.strip() == "CONNECT LOG":  # compatibility
         port = PORT_RANGE.pop()
+        q = Queue.Queue()
         logging.debug("threadNumber: {1} port: {0}".format(port, threadNumber))
-        serverThreads.append(threadedServer(port))
+        serverThreads.append(threadedServer(port, q))
         serverThreads[threadNumber].start()
         conn.send("CONNECT ACK\nNEGOTIATE:{0}\n\n".format(port))
 
