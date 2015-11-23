@@ -74,7 +74,7 @@ class threadedServer (threading.Thread):
         elif mode.strip() == "LOG":
             pass
 
-        while 1:
+        while True:
             data = conn.recv(1024)
             # logging.debug(data)
             parsed = string.split(data, '|')
@@ -117,7 +117,7 @@ class threadedServer (threading.Thread):
         return
 
 
-while 1:
+while True:
     conn, addr = init_server_socket()
     logging.debug("processing request from {0} {1}.".format(addr[0], addr[1]))
     data = conn.recv(128)  # receive inital connect request
