@@ -6,7 +6,7 @@ import logging
 import socket
 import string
 import threading
-import collectorMysql
+# import collectorMysql
 import Queue
 
 HOST = ''                 # Symbolic name meaning all available interfaces
@@ -45,7 +45,10 @@ class threadedServer (threading.Thread):
     def __init__(self, listenPort, commandQueue=None):
         threading.Thread.__init__(self)
         if commandQueue is not None:
+            print "hi2"
             self.commandQueue = commandQueue
+        else:
+            print "hi"
         self.listenPort = listenPort
         self.h = hashlib.new('md5')
         pass
@@ -81,41 +84,52 @@ class threadedServer (threading.Thread):
             parsed[-1] = parsed[-1].strip()
             if parsed[0] == '0':
                 # proto version 0
-                temp = parsed[3]
                 timestamp = parsed[1]
                 sensorName = parsed[2]
+                temp = parsed[3]
+            if parsed[0] == '1':
+                # proto version 1
+                payloadType = parsed[1]
+                if payloadType == 'DATA' and len(parsed) == 5:
+                    timestamp = parsed[2]
+                    sensorName = parsed[3]
+                    temp = parsed[4]
+                    print "collectorMysql.connectToDatasource()"
+                    print "collectorMysql.writeToDatasource(temp, timestamp, sensorName)"
+                else:
+                    logging.debug("it is a pass")
+
             else:
                 logging.debug("proto not recognized:")
                 logging.debug(parsed)
-                print "done"
                 break
 
             payload = self.h.hexdigest()
             if self.commandQueue is not None:
-                print "checking queue"
+                logging.debug("checking queue")
                 try:
                     queueValue = self.commandQueue.get(False, 0)
-                    print("got from queue: {0}".format(queueValue))
+                    logging.debug("got from queue: {0}".format(queueValue))
                     payload += queueValue
 
                 except Queue.Empty:
                     pass
 
-            collectorMysql.connectToDatasource()
-            collectorMysql.writeToDatasource(temp, timestamp, sensorName)
-
             self.h.update(data)
             conn.sendall(payload)
+            # data = conn.recv(1024)
 
-            if not data:
-                break
+            # if not data:
+            #     logging.debug("nothing received")
 
+        logging.debug("Worker closing port {0}".format(self.listenPort))
         self.serverSocket.close()
         PORT_RANGE.append(self.listenPort)
-        logging.debug("Worker closing port {0}".format(self.listenPort))
         self._Thread__stop()
         return
 
+q = Queue.Queue()
+q.put("test")
 
 while True:
     conn, addr = init_server_socket()
@@ -130,11 +144,13 @@ while True:
     # compatibility
     if data.strip() == "CONNECT CMD":  # client wants to connect and perform a command
         conn.send("CONNECT ACK\nREADY\n\n")
+        data = conn.recv(1024)
+        q.put(data)
+        conn.send("COMMAND ACK\n\n")
 
     # compatibility
     elif data.strip() == "CONNECT LOG":  # compatibility
         port = PORT_RANGE.pop()
-        q = Queue.Queue()
         logging.debug("threadNumber: {1} port: {0}".format(port, threadNumber))
         serverThreads.append(threadedServer(port, q))
         serverThreads[threadNumber].start()
@@ -142,7 +158,6 @@ while True:
 
     elif data.strip() == "CONNECT":  # connect, send port, and let the client tell threaded server was es kann.
         port = PORT_RANGE.pop()
-        q = Queue.Queue()
         logging.debug("threadNumber: {1} port: {0}".format(port, threadNumber))
         serverThreads.append(threadedServer(port, q))
         serverThreads[threadNumber].start()
@@ -154,5 +169,5 @@ while True:
             print "put something in queue"
         conn.send("WHA?")
 
-    conn.shutdown(socket.SHUT_RDWR)
+    # conn.shutdown(socket.SHUT_RDWR)
     conn.close()

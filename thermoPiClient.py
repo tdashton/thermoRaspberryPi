@@ -105,7 +105,7 @@ while True:
         data = wfile.read()
         wfile.close()
         temp = string.rsplit(data, '=', 1)[1]
-        q.add(temp)
+        q.put(temp)
         print "server acknowledge: {0}".format(data)
 
     time.sleep(60)
