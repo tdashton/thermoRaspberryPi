@@ -6,7 +6,7 @@ import logging
 import socket
 import string
 import threading
-# import collectorMysql
+import collectorMysql
 import Queue
 
 HOST = ''                 # Symbolic name meaning all available interfaces
@@ -45,10 +45,7 @@ class threadedServer (threading.Thread):
     def __init__(self, listenPort, commandQueue=None):
         threading.Thread.__init__(self)
         if commandQueue is not None:
-            print "hi2"
             self.commandQueue = commandQueue
-        else:
-            print "hi"
         self.listenPort = listenPort
         self.h = hashlib.new('md5')
         pass
@@ -70,12 +67,16 @@ class threadedServer (threading.Thread):
         conn, addr = self.initial_setup()
 
         #  TODO non blocking: https://docs.python.org/2/howto/sockets.html#non-blocking-sockets
+        logging.debug("waiting for mode")
         mode = conn.recv(128)
         if mode.strip() == "CMD":
             self.clientCommand = True
 
         elif mode.strip() == "LOG":
             pass
+
+        logging.debug("set mode:{0}".format(mode.strip()))
+        conn.send("ACK:{0}".format(mode.strip()))
 
         while True:
             data = conn.recv(1024)
@@ -94,13 +95,13 @@ class threadedServer (threading.Thread):
                     timestamp = parsed[2]
                     sensorName = parsed[3]
                     temp = parsed[4]
-                    print "collectorMysql.connectToDatasource()"
-                    print "collectorMysql.writeToDatasource(temp, timestamp, sensorName)"
+                    collectorMysql.connectToDatasource()
+                    collectorMysql.writeToDatasource(temp, timestamp, sensorName)
                 else:
                     logging.debug("it is a pass")
 
             else:
-                logging.debug("proto not recognized:")
+                logging.debug("proto not recognized")
                 logging.debug(parsed)
                 break
 
@@ -129,7 +130,6 @@ class threadedServer (threading.Thread):
         return
 
 q = Queue.Queue()
-q.put("test")
 
 while True:
     conn, addr = init_server_socket()
@@ -164,9 +164,6 @@ while True:
         conn.send("CONNECT ACK\nNEGOTIATE:{0}\n\n".format(port))
 
     else:
-        for mThread in serverThreads:
-            mThread.commandQueue.put("something in the queue!")
-            print "put something in queue"
         conn.send("WHA?")
 
     # conn.shutdown(socket.SHUT_RDWR)

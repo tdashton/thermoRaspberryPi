@@ -1,5 +1,5 @@
 [main]
 host=1.1.1.1
 port=2020
-
-command=True
+command=1
+bcm_id=17

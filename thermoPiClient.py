@@ -4,6 +4,7 @@ import ConfigParser
 import datetime
 import logging
 import Queue
+import RPi.GPIO as GPIO
 import socket
 import string
 import sys
@@ -16,9 +17,8 @@ config.read('config/client.cfg')
 
 HOST = config.get('main', 'host')
 PORT = config.getint('main', 'port')
-COMMAND_MODE = config.getbool('main', 'comamnd')
+COMMAND_MODE = config.getint('main', 'command')
 COMMAND_BCIM_ID = config.getint('main', 'bcm_id')
-
 
 w1_path = "/sys/bus/w1/devices/{0}/w1_slave"
 sensors = ["10-000802bcf635", "10-000802b5535b"]
@@ -46,19 +46,31 @@ class threadedClient (threading.Thread):
 
     def run(self):
         self.open_socket(HOST, PORT)
+
+        if COMMAND_MODE == 1:
+            self.wsock.send("CMD")
+        else:
+            self.wsock.send("LOG")
+
+        data = self.wsock.recv(128)
+
         while True:
-            print "checking queue"
+            # print "checking queue"
             if self.commandQueue is not None:
-                print "checking queue, found something"
                 try:
                     queueValue = self.commandQueue.get(False, 0)
+                    # print "checking queue, found something:{0}".format(queueValue)
                     self.wsock.send(queueValue)
+                    data = self.wsock.recv(128)
+                    print data
+                    if(data.strip() == "TOGGLE"):
+                        GPIO.output(17, not GPIO.input(COMMAND_BCIM_ID))
+                        pass
 
                 except Queue.Empty:
+                    # print "nothing in the queue"
                     pass
-
-                data = self.wsock.recv(128)
-                print data
+            time.sleep(1)
 
     def open_socket(self, addr, port):
         if self.wsock is None:
@@ -66,6 +78,13 @@ class threadedClient (threading.Thread):
             self.create_socket(addr, port)
         else:
             print "already connected to {0} port {1}".format(addr, port)
+
+    def create_socket(self, addr, port):
+        print "connecting to worker {0} port {1}".format(addr, port)
+        wokerPort = self.negotiate_connection(addr, port)
+        # time.sleep(1)
+        self.wsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.wsock.connect((addr, wokerPort))
 
     def negotiate_connection(self, addr, port):
         try:
@@ -86,26 +105,28 @@ class threadedClient (threading.Thread):
             print 'Failed to create socket. Error code: ' + str(msg[0]) + ' , Error message : ' + msg[1]
             sys.exit()
 
-    def create_socket(self, addr, port):
-        self.port = self.negotiate_connection(addr, port)
-        # time.sleep(1)
-        self.wsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.wsock.connect((addr, port))
-        self.wsock.setblocking(0)
-
 
 q = Queue.Queue()
 client = threadedClient(q)
+client.start()
 
+i = 0
 while True:
-    for sensor in sensors:
-        # 24 00 4b 46 ff ff 0e 10 3d : crc=3d YES
-        # 24 00 4b 46 ff ff 0e 10 3d t=17875
-        wfile = open(w1_path.format(sensor), 'r')
-        data = wfile.read()
-        wfile.close()
-        temp = string.rsplit(data, '=', 1)[1]
-        q.put(temp)
-        print "server acknowledge: {0}".format(data)
+    if i == 0:
+        i = 0
+        for sensor in sensors:
+            # 24 00 4b 46 ff ff 0e 10 3d : crc=3d YES
+            # 24 00 4b 46 ff ff 0e 10 3d t=17875
+            # data = "24 00 4b 46 ff ff 0e 10 3d t=17875"
+            wfile = open(w1_path.format(sensor), 'r')
+            data = wfile.read()
+            wfile.close()
+            temp = string.rsplit(data, '=', 1)[1]
+            q.put('1|DATA|{0}|{1}|{2}'.format(datetime.datetime.now(), sensor, temp))
+    else:
+        q.put("1|PASS")
+    i = i + 1
+    if i == 60:
+        i = 0
 
-    time.sleep(60)
+    time.sleep(1)
