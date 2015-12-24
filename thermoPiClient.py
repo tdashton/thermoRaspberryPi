@@ -20,6 +20,9 @@ PORT = config.getint('main', 'port')
 COMMAND_MODE = config.getint('main', 'command')
 COMMAND_BCIM_ID = config.getint('main', 'bcm_id')
 
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(COMMAND_BCIM_ID, GPIO.OUT)
+
 w1_path = "/sys/bus/w1/devices/{0}/w1_slave"
 sensors = ["10-000802bcf635", "10-000802b5535b"]
 
@@ -64,7 +67,7 @@ class threadedClient (threading.Thread):
                     data = self.wsock.recv(128)
                     print data
                     if(data.strip() == "TOGGLE"):
-                        GPIO.output(17, not GPIO.input(COMMAND_BCIM_ID))
+                        GPIO.output(COMMAND_BCIM_ID, not GPIO.input(COMMAND_BCIM_ID))
                         pass
 
                 except Queue.Empty:

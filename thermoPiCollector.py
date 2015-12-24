@@ -105,18 +105,17 @@ class threadedServer (threading.Thread):
                 logging.debug(parsed)
                 break
 
-            payload = self.h.hexdigest()
             if self.commandQueue is not None:
                 logging.debug("checking queue")
                 try:
                     queueValue = self.commandQueue.get(False, 0)
                     logging.debug("got from queue: {0}".format(queueValue))
-                    payload += queueValue
 
                 except Queue.Empty:
                     pass
 
             self.h.update(data)
+            payload = self.h.hexdigest()
             conn.sendall(payload)
             # data = conn.recv(1024)
 
