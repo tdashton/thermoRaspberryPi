@@ -40,14 +40,12 @@ class threadedServer (threading.Thread):
     listenPort = None
     commandQueue = None
     clientCommand = False  # can the client receive GPIO commands
-    h = None
 
     def __init__(self, listenPort, commandQueue=None):
         threading.Thread.__init__(self)
         if commandQueue is not None:
             self.commandQueue = commandQueue
         self.listenPort = listenPort
-        self.h = hashlib.new('md5')
         pass
 
     def __del__(self):
@@ -115,9 +113,7 @@ class threadedServer (threading.Thread):
                 except Queue.Empty:
                     pass
 
-            logging.debug("payload")
-            self.h.update(data)
-            payload = self.h.hexdigest()
+            payload = hashlib.md5(data).hexdigest()
             conn.sendall(payload)
             # data = conn.recv(1024)
 
