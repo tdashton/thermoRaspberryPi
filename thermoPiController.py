@@ -37,7 +37,7 @@ while 1:
     logging.debug("data: " + data)
 
     if data.strip() == "CMD TOGGLE": # client wants to connect and perform a command
-        GPIO.output(17, not GPIO.input(BCIM_ID))
+        GPIO.output(17, not GPIO.input(17))
         conn.send(stringStatus.format(BCIM_ID, GPIO.input(BCIM_ID)))
         logging.debug(datetime.datetime.now() + " " + stringStatus.format(BCIM_ID, GPIO.input(BCIM_ID)))
 

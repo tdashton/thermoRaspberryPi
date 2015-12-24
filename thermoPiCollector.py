@@ -98,7 +98,8 @@ class threadedServer (threading.Thread):
                     collectorMysql.connectToDatasource()
                     collectorMysql.writeToDatasource(temp, timestamp, sensorName)
                 else:
-                    logging.debug("it is a pass")
+                    # logging.debug("it is a pass")
+                    pass
 
             else:
                 logging.debug("proto not recognized")
@@ -106,7 +107,7 @@ class threadedServer (threading.Thread):
                 break
 
             if self.commandQueue is not None:
-                logging.debug("checking queue")
+                # logging.debug("checking queue")
                 try:
                     queueValue = self.commandQueue.get(False, 0)
                     logging.debug("got from queue: {0}".format(queueValue))
@@ -114,6 +115,7 @@ class threadedServer (threading.Thread):
                 except Queue.Empty:
                     pass
 
+            logging.debug("payload")
             self.h.update(data)
             payload = self.h.hexdigest()
             conn.sendall(payload)
