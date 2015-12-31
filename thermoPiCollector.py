@@ -48,21 +48,27 @@ class threadedServer (threading.Thread):
         self.listenPort = listenPort
         pass
 
-    def __del__(self):
-        print "cowardly dying..."
-        # TODO: for some reason the threads are never deallocated until the main
-        # process is killed... maybe setDaemon()
-        pass
-
     def initial_setup(self):
         self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.serverSocket.settimeout(10)
         self.serverSocket.bind((HOST, self.listenPort))
         self.serverSocket.listen(1)
         logging.info('worker listening on {0}'.format(self.listenPort))
         return self.serverSocket.accept()
 
+    def tear_down(self):
+        logging.debug("Worker closing port {0}".format(self.listenPort))
+        self.serverSocket.close()
+        PORT_RANGE.append(self.listenPort)
+
     def run(self):
-        conn, addr = self.initial_setup()
+        logging.debug("waiting for connection")
+        try:
+            conn, addr = self.initial_setup()
+        except socket.timeout:
+            logging.debug("timed out")
+            self.tear_down()
+            return
 
         #  TODO non blocking: https://docs.python.org/2/howto/sockets.html#non-blocking-sockets
         logging.debug("waiting for mode")
@@ -121,11 +127,11 @@ class threadedServer (threading.Thread):
             # if not data:
             #     logging.debug("nothing received")
 
-        logging.debug("Worker closing port {0}".format(self.listenPort))
-        self.serverSocket.close()
-        PORT_RANGE.append(self.listenPort)
-        self._Thread__stop()
-        return
+        # logging.debug("Worker closing port {0}".format(self.listenPort))
+        # self.serverSocket.close()
+        # PORT_RANGE.append(self.listenPort)
+        self.tear_down()
+        pass
 
 q = Queue.Queue()
 
@@ -138,6 +144,7 @@ while True:
 
     if len(PORT_RANGE) == 0:
         conn.send("NO_PORTS")  # sorry, no more ports, threads are all running.
+        continue
 
     # compatibility
     if data.strip() == "CONNECT CMD":  # client wants to connect and perform a command
@@ -158,6 +165,7 @@ while True:
         port = PORT_RANGE.pop()
         logging.debug("threadNumber: {1} port: {0}".format(port, threadNumber))
         serverThreads.append(threadedServer(port, q))
+        serverThreads[threadNumber].setDaemon(True)
         serverThreads[threadNumber].start()
         conn.send("CONNECT ACK\nNEGOTIATE:{0}\n\n".format(port))
 
