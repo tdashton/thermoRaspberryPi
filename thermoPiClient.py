@@ -127,7 +127,8 @@ while True:
             temp = string.rsplit(data, '=', 1)[1]
             q.put('1|DATA|{0}|{1}|{2}'.format(datetime.datetime.now(), sensor, temp))
     else:
-        q.put("1|PASS")
+        # q.put("1|PASS")
+        pass
     i = i + 1
     if i == 60:
         i = 0
