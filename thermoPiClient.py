@@ -24,7 +24,7 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setup(COMMAND_BCIM_ID, GPIO.OUT)
 
 w1_path = "/sys/bus/w1/devices/{0}/w1_slave"
-sensors = ["10-000802bcf635", "10-000802b5535b"]
+sensors = ["10-000802bcf635", "10-000802b5535b"]  # draussen / drinnen
 
 logging.basicConfig(filename='client.log', level=logging.DEBUG)
 
