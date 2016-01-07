@@ -4,7 +4,6 @@ import ConfigParser
 import datetime
 import logging
 import Queue
-import RPi.GPIO as GPIO
 import socket
 import string
 import sys
@@ -17,11 +16,6 @@ config.read('config/client.cfg')
 
 HOST = config.get('main', 'host')
 PORT = config.getint('main', 'port')
-COMMAND_MODE = config.getint('main', 'command')
-COMMAND_BCIM_ID = config.getint('main', 'bcm_id')
-
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(COMMAND_BCIM_ID, GPIO.OUT)
 
 w1_path = "/sys/bus/w1/devices/{0}/w1_slave"
 sensors = ["10-000802bcf635", "10-000802b5535b"]  # draussen / drinnen
@@ -66,9 +60,6 @@ class threadedClient (threading.Thread):
                     self.wsock.send(queueValue)
                     data = self.wsock.recv(128)
                     print data
-                    if(data.strip() == "TOGGLE"):
-                        GPIO.output(COMMAND_BCIM_ID, not GPIO.input(COMMAND_BCIM_ID))
-                        pass
 
                 except Queue.Empty:
                     # print "nothing in the queue"

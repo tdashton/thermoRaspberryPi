@@ -39,11 +39,12 @@ class thermostatRunner (threading.Thread):
 
     def run(self):
         logging.debug("acquire")
-        logging.debug(self.requestedTemp)
-        threadLock.acquire()
+        locked = threadLock.acquire(False)
+        if not locked:
+            logging.debug("alread running")
+            return
         toggle_gpio(17)
         temp = get_temp()
-        logging.debug(temp)
         while(temp < self.requestedTemp):
             temp = get_temp()
             logging.debug("heating while {0} < {1}".format(temp, self.requestedTemp))
