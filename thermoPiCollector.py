@@ -75,7 +75,6 @@ class threadedServer (threading.Thread):
         mode = conn.recv(128)
         if mode.strip() == "CMD":
             self.clientCommand = True
-
         elif mode.strip() == "LOG":
             pass
 

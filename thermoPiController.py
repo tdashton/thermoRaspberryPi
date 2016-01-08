@@ -11,12 +11,13 @@ import time
 HOST = ''  # Symbolic name meaning all available interfaces
 MAIN_PORT = 2010  # Arbitrary non-privileged port for connection
 
-MINIMUM_HEAT_TIME = 1 * 60
+MINIMUM_HEAT_TIME = 5 * 60
 MAXIMUM_HEAT_TIME = 60 * 60
 
 BCIM_ID = 17
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(BCIM_ID, GPIO.OUT)
+GPIO.setwarnings(False)
 
 serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 serverSocket.bind((HOST, MAIN_PORT))
@@ -52,9 +53,9 @@ class thermostatRunner (threading.Thread):
         logging.debug("Acquire lock")
         locked = threadLock.acquire(False)
         if not locked:
-            logging.debug("Lock not acquired, alread running")
+            logging.debug("Lock not acquired, already running")
             return
-        toggle_gpio(17, True)
+        toggle_gpio(BCIM_ID, True)
         try:
             while(self.test_condition() or self.timeRunning <= MINIMUM_HEAT_TIME):
                 time.sleep(1)
@@ -66,7 +67,7 @@ class thermostatRunner (threading.Thread):
         except Exception as ex:
             logging.warning(ex)
 
-        toggle_gpio(17, False)
+        toggle_gpio(BCIM_ID, False)
         threadLock.release()
         logging.debug("Released Lock")
         pass
@@ -112,7 +113,7 @@ def get_temp():
     data = wfile.read()
     wfile.close()
     temp = string.rsplit(data, '=', 1)[1]
-    return temp
+    return int(temp)
 
 
 def toggle_gpio(pinId, inputMode=False):

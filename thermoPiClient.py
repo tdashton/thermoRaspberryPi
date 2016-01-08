@@ -43,11 +43,8 @@ class threadedClient (threading.Thread):
 
     def run(self):
         self.open_socket(HOST, PORT)
-
-        if COMMAND_MODE == 1:
-            self.wsock.send("CMD")
-        else:
-            self.wsock.send("LOG")
+        # sends that i am a logger
+        self.wsock.send("LOG")
 
         data = self.wsock.recv(128)
 
