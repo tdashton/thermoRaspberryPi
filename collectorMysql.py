@@ -38,7 +38,7 @@ def writeToControlDatasource(value=0, date=datetime.datetime.now(),):
     connectToDatasource()
     try:
         db.query(
-            "INSERT INTO logs_control (value, datetime) VALUES ({0}, '{1}')"
+            "INSERT INTO logs_control (status, datetime) VALUES ({0}, '{1}')"
             .format(value, date))
 
     except MySQLdb.ProgrammingError:

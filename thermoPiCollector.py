@@ -86,13 +86,20 @@ class threadedServer (threading.Thread):
             # logging.debug(data)
             parsed = string.split(data, '|')
             parsed[-1] = parsed[-1].strip()
-            if parsed[0] == '0':
-                # proto version 0
-                timestamp = parsed[1]
-                sensorName = parsed[2]
-                temp = parsed[3]
             if parsed[0] == '1':
                 # proto version 1
+                payloadType = parsed[1]
+                if payloadType == 'DATA' and len(parsed) == 5:
+                    timestamp = parsed[2]
+                    sensorName = parsed[3]
+                    temp = parsed[4]
+                    collectorMysql.connectToDatasource()
+                    collectorMysql.writeToDatasource(temp, timestamp, sensorName)
+                else:
+                    # logging.debug("it is a pass")
+                    pass
+            elif parsed[0] == '2':
+                # proto version 2
                 payloadType = parsed[1]
                 if payloadType == 'SENSOR':
                     timestamp = parsed[2]
@@ -105,7 +112,6 @@ class threadedServer (threading.Thread):
                     collectorMysql.connectToDatasource()
                     collectorMysql.writeToControlDatasource(value, timestamp)
                 else:
-                    # logging.debug("it is a pass")
                     pass
 
             else:
