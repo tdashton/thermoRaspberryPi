@@ -11,6 +11,9 @@ import time
 HOST = ''  # Symbolic name meaning all available interfaces
 MAIN_PORT = 2010  # Arbitrary non-privileged port for connection
 
+MINIMUM_HEAT_TIME = 1 * 60
+MAXIMUM_HEAT_TIME = 60 * 60
+
 BCIM_ID = 17
 # GPIO.setmode(GPIO.BCM)
 # GPIO.setup(BCIM_ID, GPIO.OUT)
@@ -23,13 +26,14 @@ stringStatus = "STATUS:{0} {1}"
 # w1_path = "/sys/bus/w1/devices/{0}/w1_slave"
 # sensor = "10-000802b5535b"
 w1_path = "{0}"
-sensor = "10-000802b5535b.txt"
+sensor = "10-000802b5535b.x"
 threadLock = threading.Lock()
 
 
 class thermostatRunner (threading.Thread):
 
     requestedTemp = 20000
+    timeRunning = 0
 
     def __init__(self, requestedTemp=20000):
         threading.Thread.__init__(self)
@@ -38,22 +42,25 @@ class thermostatRunner (threading.Thread):
         pass
 
     def run(self):
-        logging.debug("acquire")
+        logging.debug("Acquire lock")
         locked = threadLock.acquire(False)
         if not locked:
-            logging.debug("alread running")
+            logging.debug("Lock not acquired, alread running")
             return
-        toggle_gpio(17)
+        toggle_gpio(17, True)
         temp = get_temp()
-        while(temp < self.requestedTemp):
+        while(temp < self.requestedTemp or self.timeRunning <= MINIMUM_HEAT_TIME):
             temp = get_temp()
-            logging.debug("heating while {0} < {1}".format(temp, self.requestedTemp))
+            logging.debug("heating while {0} < {1} : running for {2}".format(temp, self.requestedTemp, self.timeRunning))
             time.sleep(1)
+            self.timeRunning = self.timeRunning + 1
+            if self.timeRunning > MAXIMUM_HEAT_TIME:
+                break
             pass
 
-        toggle_gpio(17)
+        toggle_gpio(17, False)
         threadLock.release()
-        logging.debug("released")
+        logging.debug("Released Lock")
         pass
 
 '''
@@ -80,8 +87,8 @@ def get_temp():
     return temp
 
 
-def toggle_gpio(pinId):
-    print "GPIO.output(17, not GPIO.input(17))"
+def toggle_gpio(pinId, inputMode=False):
+    print "GPIO.output({1}, {0})".format(inputMode, pinId)
     pass
 
 '''
@@ -100,7 +107,7 @@ while 1:
         requestedTemp = conn.recv(128)
         temp = get_temp()
         logging.debug("starting at {0}".format(temp))
-        runner = thermostatRunner(requestedTemp)
+        runner = thermostatRunner(requestedTemp.strip())
         runner.start()
         conn.send("ACK")
 
