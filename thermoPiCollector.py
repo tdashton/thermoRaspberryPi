@@ -94,12 +94,16 @@ class threadedServer (threading.Thread):
             if parsed[0] == '1':
                 # proto version 1
                 payloadType = parsed[1]
-                if payloadType == 'DATA' and len(parsed) == 5:
+                if payloadType == 'SENSOR':
                     timestamp = parsed[2]
                     sensorName = parsed[3]
                     temp = parsed[4]
-                    collectorMysql.connectToDatasource()
                     collectorMysql.writeToDatasource(temp, timestamp, sensorName)
+                if payloadType == "CONTROL":
+                    timestamp = parsed[2]
+                    value = parsed[3]
+                    collectorMysql.connectToDatasource()
+                    collectorMysql.writeToControlDatasource(value, timestamp)
                 else:
                     # logging.debug("it is a pass")
                     pass

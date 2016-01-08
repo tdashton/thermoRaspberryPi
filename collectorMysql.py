@@ -34,6 +34,18 @@ def writeToDatasource(temp=0, date=datetime.datetime.now(), sensorName='unknown'
         pass
 
 
+def writeToControlDatasource(value=0, date=datetime.datetime.now(),):
+    connectToDatasource()
+    try:
+        db.query(
+            "INSERT INTO logs_control (value, datetime) VALUES ({0}, '{1}')"
+            .format(value, date))
+
+    except MySQLdb.ProgrammingError:
+        print "error in query with parameters: {0} {1} ".format(value, date)
+        pass
+
+
 def close():
     global db
     db.close()
