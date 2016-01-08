@@ -178,6 +178,9 @@ while True:
         serverThreads[threadNumber].start()
         conn.send("CONNECT ACK\nNEGOTIATE:{0}\n\n".format(port))
 
+    elif data.strip() == "STATUS":  # connect, send port, and let the client tell threaded server was es kann.
+        conn.send("STATUS\nTHREADS:{0}\nPORTS:{1}\n\n".format(len(serverThreads), PORT_RANGE))
+
     else:
         conn.send("WHA?")
 
