@@ -133,19 +133,19 @@ while 1:
     logging.debug("data: " + data)
 
     if data.strip() == "CMD TEMP":  # client wants to connect and perform a command
-        conn.send("OK")
+        conn.send("READY\n")
         requestedTemp = conn.recv(128)
         runner = thermostatRunner(requestedTemp.strip())
         runner.start()
-        conn.send("ACK")
+        conn.send("ACK\n")
         pass
 
     elif data.strip() == "CMD TIME":  # client wants to connect and perform a command
-        conn.send("OK")
+        conn.send("READY\n")
         requestedTime = conn.recv(128)
         runner = thermostatRunner(None, requestedTime.strip())
         runner.start()
-        conn.send("ACK")
+        conn.send("ACK\n")
         pass
 
     elif data.strip() == "CMD STATUS":  # client wants to connect and perform a command
