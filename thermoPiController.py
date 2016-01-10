@@ -48,8 +48,9 @@ class thermostatRunner (threading.Thread):
         pass
 
     def run(self):
-        if not self.requestedTemp and self.requestedTime:
+        if not self.requestedTemp and not self.requestedTime:
             logging.warning("exiting, no time or temperature given")
+            return
         logging.debug("Acquire lock")
         locked = threadLock.acquire(False)
         if not locked:
