@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import logging
-# import RPi.GPIO as GPIO  # DEBUG_GPIO
+import RPi.GPIO as GPIO  # DEBUG_GPIO
 import os.path
 import Queue
 import socket
@@ -12,28 +12,28 @@ import time
 HOST = ''  # Symbolic name meaning all available interfaces
 MAIN_PORT = 2010  # Arbitrary non-privileged port for connection
 
-MINIMUM_HEAT_TIME = 1 * 60
-MAXIMUM_HEAT_TIME = 60 * 60
+# MINIMUM_HEAT_TIME = 1 * 60
+# MAXIMUM_HEAT_TIME = 60 * 60
 DEFAULT_TEMP = 17 * 1000
 
 BCIM_ID = 17
-# GPIO.setmode(GPIO.BCM)  # DEBUG_GPIO
-# GPIO.setup(BCIM_ID, GPIO.OUT)  # DEBUG_GPIO
-# GPIO.setwarnings(False)  # DEBUG_GPIO
+GPIO.setmode(GPIO.BCM)  # DEBUG_GPIO
+GPIO.setup(BCIM_ID, GPIO.OUT)  # DEBUG_GPIO
+GPIO.setwarnings(False)  # DEBUG_GPIO
 
 serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 serverSocket.bind((HOST, MAIN_PORT))
 logging.basicConfig(filename='controller.log', level=logging.DEBUG)
 stringStatus = "STATUS:{0} {1}"
 
-# w1_path = "/sys/bus/w1/devices/{0}/w1_slave"  # DEBUG_GPIO
-# sensor = "10-000802b5535b"  # DEBUG_GPIO
-w1_path = "{0}"  # DEBUG_GPIO
-sensor = "10-000802b5535b.txt"  # DEBUG_GPIO
+w1_path = "/sys/bus/w1/devices/{0}/w1_slave"  # DEBUG_GPIO
+sensor = "10-000802b5535b"  # DEBUG_GPIO
+# w1_path = "{0}"  # DEBUG_GPIO
+# sensor = "10-000802b5535b.txt"  # DEBUG_GPIO
 threadLock = threading.Lock()
 
 
-class thermostatRunner (threading.Thread):
+class thermostatRunner(threading.Thread):
 
     commandQueue = None
     requestedTemp = None
@@ -71,21 +71,23 @@ class thermostatRunner (threading.Thread):
 
             try:
                 queueValue = self.commandQueue.get(False, 0)
-                print "checking queue, found something:{0}".format(queueValue)
+                # print "checking queue, found something:{0}".format(queueValue)
                 if 'temp' in queueValue:
-                    print "setting temp to " + queueValue['temp']
+                    logging.debug("setting temp to " + queueValue['temp'])
                     self.requestedTemp = int(queueValue['temp'])
                 if 'time' in queueValue:
-                    print "setting time to " + queueValue['time']
+                    logging.debug("setting time to " + queueValue['time'])
                     self.requestedTime = int(queueValue['time'])
                 if 'cancel' in queueValue:
-                    print "requested cancel "
+                    logging.debug("requested cancel")
+                    self.requestedTime = 0
+                    self.timeRunning = 0
                 if 'stop' in queueValue:
-                    print "requested stop"
+                    logging.debug("requested stop")
+                    toggle_gpio(BCIM_ID, False, True)
                     return
 
             except Queue.Empty:
-                print "nothing in the queue"
                 pass
 
             if self.requestedTime > 0:
@@ -97,8 +99,8 @@ class thermostatRunner (threading.Thread):
                     self.timeRunning = self.timeRunning + 1
                     if self.timeRunning == self.requestedTime:
                         self.requestedTime = 0
-                        if currentTemp > xself.requestedTemp:
-                            logging.debug("timer expired and requuested temperature not reached")
+                        if currentTemp > self.requestedTemp:
+                            logging.debug("timer expired and requested temperature reached")
                             toggle_gpio(BCIM_ID, False, self.running)
                             self.running = False
             else:
@@ -149,8 +151,8 @@ def get_temp():
 def toggle_gpio(pinId, inputMode=False, currentStatus=False):
     if inputMode == currentStatus:
         return
-    # GPIO.output(pinId, inputMode)  # DEBUG_GPIO
-    print "GPIO.output({1}, {0})".format(inputMode, pinId)  # DEBUG_GPIO
+    GPIO.output(pinId, inputMode)  # DEBUG_GPIO
+    # print "GPIO.output({1}, {0})".format(inputMode, pinId)  # DEBUG_GPIO
     pass
 
 '''
@@ -182,9 +184,19 @@ while 1:
         conn.send("ACK\n")
         pass
 
-    elif data.strip() == "CMD STATUS":  # client wants to connect and perform a command
-        # conn.send(stringStatus.format(BCIM_ID, GPIO.input(BCIM_ID)))  # DEBUG_GPIO
+    elif data.strip() == "CMD CANCEL":  # client wants to connect and perform a command
+        q.put({'cancel': True})
+        conn.send("ACK\n")
         pass
+
+    elif data.strip() == "CMD STOP":  # client wants to connect and perform a command
+        q.put({'stop': True})
+        conn.send("ACK\n")
+        pass
+
+    # elif data.strip() == "CMD STATUS":  # client wants to connect and perform a command
+    #     conn.send(stringStatus.format(BCIM_ID, GPIO.input(BCIM_ID)))  # DEBUG_GPIO
+    #     pass
 
     else:
         conn.send("WHA?")
