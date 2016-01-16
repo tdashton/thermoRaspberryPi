@@ -12,7 +12,7 @@ import time
 HOST = ''  # Symbolic name meaning all available interfaces
 MAIN_PORT = 2010  # Arbitrary non-privileged port for connection
 
-# MINIMUM_HEAT_TIME = 1 * 60
+MINIMUM_HEAT_TIME = 5 * 60
 # MAXIMUM_HEAT_TIME = 60 * 60
 DEFAULT_TEMP = 17 * 1000
 
@@ -38,8 +38,10 @@ class thermostatRunner(threading.Thread):
     commandQueue = None
     requestedTemp = None
     requestedTime = 0
-    timeRunning = 0
+    requestedTimeRunning = 0
+    # keep track of whether the gpio pin is toggled or not
     running = False
+    runningTime = 0
 
     def __init__(self, mQueue=None, requestedTemp=None):
         threading.Thread.__init__(self)
@@ -81,7 +83,7 @@ class thermostatRunner(threading.Thread):
                 if 'cancel' in queueValue:
                     logging.debug("requested cancel")
                     self.requestedTime = 0
-                    self.timeRunning = 0
+                    self.requestedTimeRunning = 0
                 if 'stop' in queueValue:
                     logging.debug("requested stop")
                     toggle_gpio(BCIM_ID, False, True)
@@ -92,33 +94,44 @@ class thermostatRunner(threading.Thread):
 
             if self.requestedTime > 0:
                 toggle_gpio(BCIM_ID, True, self.running)
-                self.running = True
-                logging.debug("time set to {0}".format(self.requestedTime))
-                if self.timeRunning <= self.requestedTime:
-                    logging.debug("heating while {0} < {1}".format(self.timeRunning, self.requestedTime))
-                    self.timeRunning = self.timeRunning + 1
-                    if self.timeRunning == self.requestedTime:
+                self.set_running(True)
+                if self.requestedTimeRunning <= self.requestedTime:
+                    logging.debug("heating while {0} < {1}".format(self.requestedTimeRunning, self.requestedTime))
+                    self.requestedTimeRunning = self.requestedTimeRunning + 1
+                    if self.requestedTimeRunning == self.requestedTime:
                         self.requestedTime = 0
                         if currentTemp > self.requestedTemp:
+                            # this extra condition is to avoid turning off the switch and then
+                            # immediately back on if the requested temperature has not been reached
                             logging.debug("timer expired and requested temperature reached")
                             toggle_gpio(BCIM_ID, False, self.running)
-                            self.running = False
+                            self.set_running(False)
             else:
                 if currentTemp <= self.requestedTemp:
                     toggle_gpio(BCIM_ID, True, self.running)
-                    self.running = True
-                    logging.debug("heating while {0} < {1} : running for {2}".format(currentTemp, self.requestedTemp, self.timeRunning))
-                else:
+                    self.set_running(True)
+                    logging.debug("heating while {0} < {1}".format(currentTemp, self.requestedTemp))
+                elif self.runningTime >= MINIMUM_HEAT_TIME:
+                    logging.debug("requested temperature reached")
                     toggle_gpio(BCIM_ID, False, self.running)
-                    self.running = False
+                    self.set_running(False)
 
             time.sleep(1)
+            if self.running is True:
+                self.runningTime = self.runningTime + 1
+                # logging.debug("running time {0}".format(self.runningTime))
 
         toggle_gpio(BCIM_ID, False, self.running)
-        self.running = False
+        self.set_running(False)
         threadLock.release()
         logging.debug("Released Lock")
         pass
+
+    def set_running(self, running):
+        if self.running != running:
+            logging.debug("set_running: {0}".format(running))
+            self.running = running
+            self.runningTime = 0
 
 
 '''
@@ -193,10 +206,6 @@ while 1:
         q.put({'stop': True})
         conn.send("ACK\n")
         pass
-
-    # elif data.strip() == "CMD STATUS":  # client wants to connect and perform a command
-    #     conn.send(stringStatus.format(BCIM_ID, GPIO.input(BCIM_ID)))  # DEBUG_GPIO
-    #     pass
 
     else:
         conn.send("WHA?")
