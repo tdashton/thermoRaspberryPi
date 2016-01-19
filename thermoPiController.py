@@ -12,8 +12,7 @@ import time
 HOST = ''  # Symbolic name meaning all available interfaces
 MAIN_PORT = 2010  # Arbitrary non-privileged port for connection
 
-MINIMUM_HEAT_TIME = 5 * 60
-# MAXIMUM_HEAT_TIME = 60 * 60
+RUNOUT_HEAT_TIME = 2 * 60  # time to run the thermostat after the TEMP has been reached
 DEFAULT_TEMP = 17 * 1000
 
 BCIM_ID = 17
@@ -96,7 +95,8 @@ class thermostatRunner(threading.Thread):
                 toggle_gpio(BCIM_ID, True, self.running)
                 self.set_running(True)
                 if self.requestedTimeRunning <= self.requestedTime:
-                    logging.debug("heating while {0} < {1}".format(self.requestedTimeRunning, self.requestedTime))
+                    if self.runningTime % 10 == 0:
+                        logging.debug("heating while {0} < {1}".format(self.requestedTimeRunning, self.requestedTime))
                     self.requestedTimeRunning = self.requestedTimeRunning + 1
                     if self.requestedTimeRunning == self.requestedTime:
                         self.requestedTime = self.requestedTimeRunning = 0
@@ -106,15 +106,19 @@ class thermostatRunner(threading.Thread):
                             logging.debug("timer expired and requested temperature reached")
                             toggle_gpio(BCIM_ID, False, self.running)
                             self.set_running(False)
+
             else:
-                if currentTemp <= self.requestedTemp:
-                    toggle_gpio(BCIM_ID, True, self.running)
-                    self.set_running(True)
-                    logging.debug("heating while {0} < {1}".format(currentTemp, self.requestedTemp))
-                elif self.runningTime >= MINIMUM_HEAT_TIME:
-                    logging.debug("requested temperature reached")
-                    toggle_gpio(BCIM_ID, False, self.running)
-                    self.set_running(False)
+                if self.running is False:
+                    if currentTemp < self.requestedTemp:
+                        toggle_gpio(BCIM_ID, True, self.running)
+                        self.set_running(True)
+                        logging.debug("heating while {0} < {1}".format(currentTemp, self.requestedTemp))
+                else:
+                    if currentTemp > self.requestedTemp:
+                        # when the requested temperature has been reached, we set the timer
+                        # to run the heater for a few more minutes to ensure we reach the temperature
+                        logging.debug("setting runout time")
+                        self.requestedTime = RUNOUT_HEAT_TIME
 
             time.sleep(1)
             if self.running is True:
