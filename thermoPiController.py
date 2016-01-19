@@ -99,7 +99,7 @@ class thermostatRunner(threading.Thread):
                     logging.debug("heating while {0} < {1}".format(self.requestedTimeRunning, self.requestedTime))
                     self.requestedTimeRunning = self.requestedTimeRunning + 1
                     if self.requestedTimeRunning == self.requestedTime:
-                        self.requestedTime = 0
+                        self.requestedTime = self.requestedTimeRunning = 0
                         if currentTemp > self.requestedTemp:
                             # this extra condition is to avoid turning off the switch and then
                             # immediately back on if the requested temperature has not been reached
