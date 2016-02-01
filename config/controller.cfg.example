@@ -1,0 +1,8 @@
+[network]
+# leave blank for all interfaces
+host=
+port=2010
+
+[main]
+bcim_id=0
+sensor=10-xxxxxxxxxxxx

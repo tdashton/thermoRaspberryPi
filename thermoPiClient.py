@@ -14,11 +14,11 @@ import time
 config = ConfigParser.SafeConfigParser({'host': '', 'port': 2020})
 config.read('config/client.cfg')
 
-HOST = config.get('main', 'host')
-PORT = config.getint('main', 'port')
+HOST = config.get('network', 'host')
+PORT = config.getint('network', 'port')
 
 w1_path = "/sys/bus/w1/devices/{0}/w1_slave"
-sensors = ["10-000802bcf635", "10-000802b5535b"]  # draussen / drinnen
+sensors = config.get('main', 'sensors')
 
 logging.basicConfig(filename='client.log', level=logging.DEBUG)
 

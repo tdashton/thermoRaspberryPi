@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import ConfigParser
 import logging
 import RPi.GPIO as GPIO  # DEBUG_GPIO
 import os.path
@@ -9,13 +10,16 @@ import string
 import threading
 import time
 
-HOST = ''  # Symbolic name meaning all available interfaces
-MAIN_PORT = 2010  # Arbitrary non-privileged port for connection
+config = ConfigParser.SafeConfigParser()
+config.read('config/controller.cfg')
+
+HOST = config.get('network', 'host')  # Symbolic name meaning all available interfaces
+MAIN_PORT = config.getint('network', 'port')  # Arbitrary non-privileged port for connection
 
 RUNOUT_HEAT_TIME = 2 * 60  # time to run the thermostat after the TEMP has been reached
 DEFAULT_TEMP = 17 * 1000
 
-BCIM_ID = 17
+BCIM_ID = config.getint('main', 'bcim_id')
 GPIO.setmode(GPIO.BCM)  # DEBUG_GPIO
 GPIO.setup(BCIM_ID, GPIO.OUT)  # DEBUG_GPIO
 GPIO.setwarnings(False)  # DEBUG_GPIO
@@ -26,7 +30,7 @@ logging.basicConfig(filename='controller.log', level=logging.DEBUG)
 stringStatus = "STATUS:{0} {1}"
 
 w1_path = "/sys/bus/w1/devices/{0}/w1_slave"  # DEBUG_GPIO
-sensor = "10-000802b5535b"  # DEBUG_GPIO
+sensor = config.get('main', 'sensor')  # DEBUG_GPIO
 # w1_path = "{0}"  # DEBUG_GPIO
 # sensor = "10-000802b5535b.txt"  # DEBUG_GPIO
 threadLock = threading.Lock()

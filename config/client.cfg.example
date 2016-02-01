@@ -1,5 +1,6 @@
-[main]
+[network]
 host=1.1.1.1
 port=2020
-command=1
-bcm_id=17
+
+[main]
+sensors=10-xxxxxxxxxxxx,10-xxxxxxxxxxxx
