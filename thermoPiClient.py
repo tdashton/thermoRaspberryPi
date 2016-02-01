@@ -11,14 +11,18 @@ import threading
 import time
 
 
-config = ConfigParser.SafeConfigParser({'host': '', 'port': 2020})
+config = ConfigParser.RawConfigParser()
 config.read('config/client.cfg')
 
 HOST = config.get('network', 'host')
 PORT = config.getint('network', 'port')
 
 w1_path = "/sys/bus/w1/devices/{0}/w1_slave"
-sensors = config.get('main', 'sensors')
+sensorsConfig = config.items('sensors')
+
+sensors = []
+for sensor in sensorsConfig:
+    sensors.append(sensor[1])
 
 logging.basicConfig(filename='client.log', level=logging.DEBUG)
 

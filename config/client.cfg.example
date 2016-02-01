@@ -2,5 +2,6 @@
 host=1.1.1.1
 port=2020
 
-[main]
-sensors=10-xxxxxxxxxxxx,10-xxxxxxxxxxxx
+[sensors]
+one=10-xxxxxxxxxxxx
+two=11-xxxxxxxxxxxx
