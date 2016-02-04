@@ -39,6 +39,7 @@ threadLock = threading.Lock()
 class thermostatRunner(threading.Thread):
 
     commandQueue = None
+    currentTemp = None
     requestedTemp = None
     requestedTime = 0
     requestedTimeRunning = 0
@@ -70,27 +71,26 @@ class thermostatRunner(threading.Thread):
 
         while True:
             try:
-                currentTemp = get_temp()
-            except Exception as ex:
-                logging.warning(ex)
-
-            try:
-                queueValue = self.commandQueue.get(False, 0)
-                # print "checking queue, found something:{0}".format(queueValue)
-                if 'temp' in queueValue:
-                    logging.debug("setting temp to " + queueValue['temp'])
-                    self.requestedTemp = int(queueValue['temp'])
-                if 'time' in queueValue:
-                    logging.debug("setting time to " + queueValue['time'])
-                    self.requestedTime = int(queueValue['time'])
-                if 'cancel' in queueValue:
-                    logging.debug("requested cancel")
-                    self.requestedTime = 0
-                    self.requestedTimeRunning = 0
-                if 'stop' in queueValue:
-                    logging.debug("requested stop")
-                    toggle_gpio(BCIM_ID, False, True)
-                    return
+                while not self.commandQueue.empty():
+                    queueValue = self.commandQueue.get(False, 0)
+                    # print "checking queue, found something:{0}".format(queueValue)
+                    if 'temp' in queueValue:
+                        logging.debug("setting temp to " + queueValue['temp'])
+                        self.requestedTemp = int(queueValue['temp'])
+                    if 'sensor' in queueValue:
+                        # logging.debug("setting current temp to {0}".format(queueValue['sensor']))
+                        self.currentTemp = int(queueValue['sensor'])
+                    if 'time' in queueValue:
+                        logging.debug("setting time to " + queueValue['time'])
+                        self.requestedTime = int(queueValue['time'])
+                    if 'cancel' in queueValue:
+                        logging.debug("requested cancel")
+                        self.requestedTime = 0
+                        self.requestedTimeRunning = 0
+                    if 'stop' in queueValue:
+                        logging.debug("requested stop")
+                        toggle_gpio(BCIM_ID, False, True)
+                        return
 
             except Queue.Empty:
                 pass
@@ -104,7 +104,7 @@ class thermostatRunner(threading.Thread):
                     self.requestedTimeRunning = self.requestedTimeRunning + 1
                     if self.requestedTimeRunning == self.requestedTime:
                         self.requestedTime = self.requestedTimeRunning = 0
-                        if currentTemp > self.requestedTemp:
+                        if self.currentTemp > self.requestedTemp:
                             # this extra condition is to avoid turning off the switch and then
                             # immediately back on if the requested temperature has not been reached
                             logging.debug("timer expired and requested temperature reached")
@@ -113,12 +113,12 @@ class thermostatRunner(threading.Thread):
 
             else:
                 if self.running is False:
-                    if currentTemp < self.requestedTemp:
+                    if self.currentTemp is not None and self.currentTemp < self.requestedTemp:
                         toggle_gpio(BCIM_ID, True, self.running)
                         self.set_running(True)
-                        logging.debug("heating while {0} < {1}".format(currentTemp, self.requestedTemp))
+                        logging.debug("heating while {0} < {1}".format(self.currentTemp, self.requestedTemp))
                 else:
-                    if currentTemp > self.requestedTemp:
+                    if self.currentTemp > self.requestedTemp:
                         # when the requested temperature has been reached, we set the timer
                         # to run the heater for a few more minutes to ensure we reach the temperature
                         logging.debug("setting runout time")
@@ -143,6 +143,41 @@ class thermostatRunner(threading.Thread):
 
 
 '''
+get the temperature
+'''
+
+
+class sensorRunner(threading.Thread):
+
+    queue = None
+
+    def __init__(self, mQueue=None):
+        threading.Thread.__init__(self)
+        if mQueue is not None:
+            self.queue = mQueue
+        pass
+
+    def run(self):
+        while True:
+            # print "putting temp in queue"
+            try:
+                self.queue.put({'sensor': self.get_temp()})
+            except Exception as ex:
+                logging.warning(ex)
+            time.sleep(10)
+
+    def get_temp(self):
+        if os.path.exists(w1_path.format(sensor)) is False:
+            logging.warning("cannot read temperature")
+            raise Exception(100, "cannot read temperature")
+        wfile = open(w1_path.format(sensor), 'r')
+        data = wfile.read()
+        wfile.close()
+        temp = string.rsplit(data, '=', 1)[1]
+        return int(temp)
+
+
+'''
 for the main server
 '''
 
@@ -153,22 +188,6 @@ def init_server_socket():
     return serverSocket.accept()
 
 
-'''
-get the temperature
-'''
-
-
-def get_temp():
-    if os.path.exists(w1_path.format(sensor)) is False:
-        logging.warning("cannot read temperature")
-        raise Exception(100, "cannot read temperature")
-    wfile = open(w1_path.format(sensor), 'r')
-    data = wfile.read()
-    wfile.close()
-    temp = string.rsplit(data, '=', 1)[1]
-    return int(temp)
-
-
 def toggle_gpio(pinId, inputMode=False, currentStatus=False):
     if inputMode == currentStatus:
         return
@@ -176,12 +195,15 @@ def toggle_gpio(pinId, inputMode=False, currentStatus=False):
     # print "GPIO.output({1}, {0})".format(inputMode, pinId)  # DEBUG_GPIO
     pass
 
+
 '''
 main prog loop
 '''
 
 
 q = Queue.Queue()
+sensorRunner = sensorRunner(q)
+sensorRunner.start()
 runner = thermostatRunner(q, DEFAULT_TEMP)
 runner.start()
 
