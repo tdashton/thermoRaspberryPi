@@ -2,7 +2,7 @@
 
 ### BEGIN INIT INFO
 # Provides:        thermopi-client
-# Required-Start:  $network
+# Required-Start:  $network 
 # Required-Stop:   $network 
 # Default-Start:   2 3 4 5
 # Default-Stop:

@@ -1,26 +1,13 @@
 #!/opt/bin/python
 
 # Echo server program
-import ConfigParser
 import hashlib
 import logging
 import socket
 import string
-import sys
 import threading
 import collectorMysql
 import Queue
-
-config = ConfigParser.RawConfigParser()
-config.read('config/collector.cfg')
-
-dummy_proccess = config.get('main', 'dummy')
-if dummy_proccess is True:
-    # only set this if you are running your collector on an external server,
-    # allows the init.d startup scripts to function correctly
-    print "dummy, exiting!"
-    sys.exit(0)
-
 
 HOST = ''                 # Symbolic name meaning all available interfaces
 MAIN_PORT = 2020          # Arbitrary non-privileged port for connection negotiation
