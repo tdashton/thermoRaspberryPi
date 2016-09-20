@@ -36,6 +36,12 @@ sensor = config.get('main', 'sensor')  # DEBUG_GPIO
 threadLock = threading.Lock()
 
 
+'''
+main thermostat logic, including how long to run and keeping track of the
+current temperature (passed via Queue)
+'''
+
+
 class thermostatRunner(threading.Thread):
 
     commandQueue = None
@@ -143,7 +149,8 @@ class thermostatRunner(threading.Thread):
 
 
 '''
-get the temperature
+get the temperature, we do this in its own thread because reading the
+sensors can introduce a delay into the thermostatRunner.
 '''
 
 
