@@ -7,7 +7,11 @@ writes it to a a permanent data store.
 
 First steps:
 
-setup configuration files
+1. setup configuration files
+2. create init.d symlinks, see init.d directory in repository
+3. run daemons
+
+# thermoRaspberyPi Daemons
 
 ## Controller
 Allows you to control your Pi / thermostat via a socket connection.
@@ -21,3 +25,5 @@ data to the specified data source.
 The client is configured and started on the RaspberryPi / server reading the
 temperatures and sends the data it collects to the Collector.
 
+# What next?
+see the accompanying Web and Android project to control your thermoRaspberryPi from your Android.
