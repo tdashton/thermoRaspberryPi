@@ -5,7 +5,7 @@
 # Required-Start:  $network 
 # Required-Stop:   $network 
 # Default-Start:   2 3 4 5
-# Default-Stop:    0 1 6
+# Default-Stop:
 # Short-Description: Start ThermoPi Collector daemon
 ### END INIT INFO
 
