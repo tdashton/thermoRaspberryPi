@@ -1,7 +1,7 @@
 #!/bin/sh
 
 ### BEGIN INIT INFO
-# Provides:        thermopi-server
+# Provides:        thermopi-controller
 # Required-Start:  $network 
 # Required-Stop:   $network 
 # Default-Start:   2 3 4 5

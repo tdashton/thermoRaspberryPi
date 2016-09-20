@@ -6,3 +6,6 @@ dbName = configValue
 
 [file]
 filename = temp.log
+
+[main]
+dummy = false

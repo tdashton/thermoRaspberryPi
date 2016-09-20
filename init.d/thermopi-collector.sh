@@ -1,18 +1,18 @@
 #!/bin/sh
 
 ### BEGIN INIT INFO
-# Provides:        thermopi-client
-# Required-Start:  $network $thermopi-collector
+# Provides:        thermopi-collector
+# Required-Start:  $network 
 # Required-Stop:   $network 
 # Default-Start:   2 3 4 5
-# Default-Stop:
-# Short-Description: Start ThermoPi Client daemon
+# Default-Stop:    0 1 6
+# Short-Description: Start ThermoPi Collector daemon
 ### END INIT INFO
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
 DIR=/home/pi/thermoRaspberryPi
-DAEMON=$DIR/thermoPiClient.py
+DAEMON=$DIR/thermoPiCollector.py
 DAEMON_NAME=thermoPiClient
 test -x $DAEMON || exit 5
 
@@ -21,7 +21,7 @@ DAEMON_OPTS=""
 
 # This next line determines what user the script runs as.
 # Root generally not recommended but necessary if you are using the Raspberry Pi GPIO from Python.
-DAEMON_USER=pi
+DAEMON_USER=root
 
 # The process ID of the script when it runs is stored here:
 PIDFILE=/var/run/$DAEMON_NAME.pid
