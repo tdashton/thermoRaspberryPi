@@ -13,7 +13,7 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
 DIR=/home/pi/thermoRaspberryPi
 DAEMON=$DIR/thermoPiController.py
-DAEMON_NAME=thermoPiClient
+DAEMON_NAME=thermoPiController
 test -x $DAEMON || exit 5
 
 # Add any command line options for your daemon here
