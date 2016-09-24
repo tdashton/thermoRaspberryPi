@@ -1,4 +1,4 @@
-#!/opt/bin/python
+#!/usr/bin/python
 
 # Echo server program
 import hashlib
