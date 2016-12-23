@@ -147,6 +147,15 @@ class thermostatRunner(threading.Thread):
             self.running = running
             self.runningTime = 0
 
+    def get_running(self):
+        return self.running
+
+    def get_time_remaining(self):
+        return self.requestedTime - self.requestedTimeRunning
+
+    def get_requested_temp(self):
+        return self.requestedTemp
+
 
 '''
 get the temperature, we do this in its own thread because reading the
@@ -237,6 +246,10 @@ while 1:
     elif data.strip() == "CMD CANCEL":  # client wants to connect and perform a command
         q.put({'cancel': True})
         conn.send("ACK\n")
+        pass
+
+    elif data.strip() == "CMD STATUS":  # client wants to connect and perform a command
+        conn.send("RUNNING:{0}\nTEMP:{1}\nTIME:{2}\n".format(int(runner.get_running()), runner.get_requested_temp(), runner.get_time_remaining()))
         pass
 
     elif data.strip() == "CMD STOP":  # client wants to connect and perform a command
