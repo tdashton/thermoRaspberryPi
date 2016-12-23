@@ -39,7 +39,6 @@ class threadedServer (threading.Thread):
     serverSocket = None
     listenPort = None
     commandQueue = None
-    clientCommand = False  # can the client receive GPIO commands
 
     def __init__(self, listenPort, commandQueue=None):
         threading.Thread.__init__(self)
@@ -73,10 +72,6 @@ class threadedServer (threading.Thread):
         #  TODO non blocking: https://docs.python.org/2/howto/sockets.html#non-blocking-sockets
         logging.debug("waiting for mode")
         mode = conn.recv(128)
-        if mode.strip() == "CMD":
-            self.clientCommand = True
-        elif mode.strip() == "LOG":
-            pass
 
         logging.debug("set mode:{0}".format(mode.strip()))
         conn.send("ACK:{0}".format(mode.strip()))
