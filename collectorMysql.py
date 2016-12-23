@@ -20,6 +20,11 @@ def connectToDatasource():
     if db is None:
         db = MySQLdb.connect(user=username, passwd=password, host=host, db=dbName)
         print "connecting to db"
+        try:
+            db.query("SET AUTOCOMMIT=1")
+        except MySQLdb.ProgrammingError:
+            print "error connecting to the database"
+            pass
 
 
 def writeToDatasource(temp=0, date=datetime.datetime.now(), sensorName='unknown'):
