@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 # Echo server program
+import datetime
 import hashlib
 import logging
 import socket
@@ -101,11 +102,21 @@ class threadedServer (threading.Thread):
                     sensorName = parsed[3]
                     temp = parsed[4]
                     collectorMysql.writeToDatasource(temp, timestamp, sensorName)
-                if payloadType == "CONTROL":
+                elif payloadType == "CONTROL":
                     timestamp = parsed[2]
                     value = parsed[3]
                     collectorMysql.connectToDatasource()
                     collectorMysql.writeToControlDatasource(value, timestamp)
+                else:
+                    pass
+            elif parsed[0] == '3':
+                # proto version 3
+                payloadType = parsed[1]
+                if payloadType == 'SENSOR':
+                    timestamp = datetime.datetime.now()
+                    sensorName = parsed[2]
+                    temp = parsed[3]
+                    collectorMysql.writeToDatasource(temp, timestamp, sensorName)
                 else:
                     pass
 
