@@ -89,8 +89,8 @@ class threadedServer (threading.Thread):
                     timestamp = parsed[2]
                     sensorName = parsed[3]
                     temp = parsed[4]
-                    collectorMysql.connectToDatasource()
-                    collectorMysql.writeToDatasource(temp, timestamp, sensorName)
+                    collectorMysql.connectToDatasource(self.listenPort)
+                    collectorMysql.writeToDatasource(self.listenPort, temp, timestamp, sensorName)
                 else:
                     # logging.debug("it is a pass")
                     pass
@@ -101,12 +101,7 @@ class threadedServer (threading.Thread):
                     timestamp = parsed[2]
                     sensorName = parsed[3]
                     temp = parsed[4]
-                    collectorMysql.writeToDatasource(temp, timestamp, sensorName)
-                elif payloadType == "CONTROL":
-                    timestamp = parsed[2]
-                    value = parsed[3]
-                    collectorMysql.connectToDatasource()
-                    collectorMysql.writeToControlDatasource(value, timestamp)
+                    collectorMysql.writeToDatasource(self.listenPort, temp, timestamp, sensorName)
                 else:
                     pass
             elif parsed[0] == '3':
@@ -116,7 +111,7 @@ class threadedServer (threading.Thread):
                     timestamp = datetime.datetime.now()
                     sensorName = parsed[2]
                     temp = parsed[3]
-                    collectorMysql.writeToDatasource(temp, timestamp, sensorName)
+                    collectorMysql.writeToDatasource(self.listenPort, temp, timestamp, sensorName)
                 else:
                     pass
 

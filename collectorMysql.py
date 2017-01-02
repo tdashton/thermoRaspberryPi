@@ -3,7 +3,6 @@
 import ConfigParser
 import MySQLdb
 import datetime
-import os
 
 config = ConfigParser.RawConfigParser()
 config.read('config/collector.cfg')
@@ -13,25 +12,25 @@ password = config.get('mysql', 'password')
 host = config.get('mysql', 'host')
 dbName = config.get('mysql', 'dbName')
 
-db = {os.getpid(): None}
+db = {}
 
 
-def connectToDatasource():
+def connectToDatasource(connectionId):
     global db
-    if db[os.getpid()] is None:
-        db[os.getpid()] = MySQLdb.connect(user=username, passwd=password, host=host, db=dbName)
-        print "connecting to db, for pid {0}".format(os.getpid())
+    if connectionId not in db.keys():
+        db[connectionId] = MySQLdb.connect(user=username, passwd=password, host=host, db=dbName)
+        print "connecting to db, connection id:{0}".format(connectionId)
         try:
-            db[os.getpid()].query("SET AUTOCOMMIT=1")
+            db[connectionId].query("SET AUTOCOMMIT=1")
         except MySQLdb.ProgrammingError:
             print "error connecting to the database"
             pass
 
 
-def writeToDatasource(temp=0, date=datetime.datetime.now(), sensorName='unknown'):
-    connectToDatasource()
+def writeToDatasource(connectionId, temp=0, date=datetime.datetime.now(), sensorName='unknown'):
+    connectToDatasource(connectionId)
     try:
-        db[os.getpid()].query(
+        db[connectionId].query(
             "INSERT INTO logs (value, datetime, fk_sensor) VALUES ({0}, '{1}', '{2}')"
             .format(temp, date, sensorName))
 
@@ -40,10 +39,10 @@ def writeToDatasource(temp=0, date=datetime.datetime.now(), sensorName='unknown'
         pass
 
 
-def writeToControlDatasource(value=0, date=datetime.datetime.now(),):
-    connectToDatasource()
+def writeToControlDatasource(connectionId, value=0, date=datetime.datetime.now(),):
+    connectToDatasource(connectionId)
     try:
-        db[os.getpid()].query(
+        db[connectionId].query(
             "INSERT INTO logs_control (status, datetime) VALUES ({0}, '{1}')"
             .format(value, date))
 
@@ -52,6 +51,7 @@ def writeToControlDatasource(value=0, date=datetime.datetime.now(),):
         pass
 
 
-def close():
+def close(connectionId):
     global db
-    db[os.getpid()].close()
+    db[connectionId].close()
+    del db[connectionId]
