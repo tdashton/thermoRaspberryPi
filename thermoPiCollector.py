@@ -79,7 +79,7 @@ class threadedServer (threading.Thread):
 
         while True:
             data = conn.recv(1024)
-            # logging.debug(data)
+            logging.debug(data)
             parsed = string.split(data, '|')
             parsed[-1] = parsed[-1].strip()
             if parsed[0] == '1':

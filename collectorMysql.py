@@ -3,6 +3,7 @@
 import ConfigParser
 import MySQLdb
 import datetime
+import os
 
 config = ConfigParser.RawConfigParser()
 config.read('config/collector.cfg')
@@ -12,16 +13,16 @@ password = config.get('mysql', 'password')
 host = config.get('mysql', 'host')
 dbName = config.get('mysql', 'dbName')
 
-db = None
+db = {os.getpid(): None}
 
 
 def connectToDatasource():
     global db
-    if db is None:
-        db = MySQLdb.connect(user=username, passwd=password, host=host, db=dbName)
-        print "connecting to db"
+    if db[os.getpid()] is None:
+        db[os.getpid()] = MySQLdb.connect(user=username, passwd=password, host=host, db=dbName)
+        print "connecting to db, for pid {0}".format(os.getpid())
         try:
-            db.query("SET AUTOCOMMIT=1")
+            db[os.getpid()].query("SET AUTOCOMMIT=1")
         except MySQLdb.ProgrammingError:
             print "error connecting to the database"
             pass
@@ -30,7 +31,7 @@ def connectToDatasource():
 def writeToDatasource(temp=0, date=datetime.datetime.now(), sensorName='unknown'):
     connectToDatasource()
     try:
-        db.query(
+        db[os.getpid()].query(
             "INSERT INTO logs (value, datetime, fk_sensor) VALUES ({0}, '{1}', '{2}')"
             .format(temp, date, sensorName))
 
@@ -42,7 +43,7 @@ def writeToDatasource(temp=0, date=datetime.datetime.now(), sensorName='unknown'
 def writeToControlDatasource(value=0, date=datetime.datetime.now(),):
     connectToDatasource()
     try:
-        db.query(
+        db[os.getpid()].query(
             "INSERT INTO logs_control (status, datetime) VALUES ({0}, '{1}')"
             .format(value, date))
 
@@ -53,4 +54,4 @@ def writeToControlDatasource(value=0, date=datetime.datetime.now(),):
 
 def close():
     global db
-    db.close()
+    db[os.getpid()].close()
