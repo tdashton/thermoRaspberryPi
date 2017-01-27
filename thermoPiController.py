@@ -32,7 +32,7 @@ stringStatus = "STATUS:{0} {1}"
 w1_path = "/sys/bus/w1/devices/{0}/w1_slave"  # DEBUG_GPIO
 sensor = config.get('main', 'sensor')  # DEBUG_GPIO
 # w1_path = "{0}"  # DEBUG_GPIO
-# sensor = "10-000802b5535b.txt"  # DEBUG_GPIO
+# sensor = "./tmp/10-000802b5535b.txt"  # DEBUG_GPIO
 threadLock = threading.Lock()
 
 
