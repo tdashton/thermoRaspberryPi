@@ -32,7 +32,7 @@ stringStatus = "STATUS:{0} {1}"
 w1_path = "/sys/bus/w1/devices/{0}/w1_slave"  # DEBUG_GPIO
 sensor = config.get('main', 'sensor')  # DEBUG_GPIO
 # w1_path = "{0}"  # DEBUG_GPIO
-# sensor = "10-000802b5535b.txt"  # DEBUG_GPIO
+# sensor = "./tmp/10-000802b5535b.txt"  # DEBUG_GPIO
 threadLock = threading.Lock()
 
 
@@ -165,19 +165,29 @@ sensors can introduce a delay into the thermostatRunner.
 
 class sensorRunner(threading.Thread):
 
+    tempList = []
     queue = None
 
     def __init__(self, mQueue=None):
         threading.Thread.__init__(self)
         if mQueue is not None:
             self.queue = mQueue
+        for i in range(10):
+            self.tempList.append(int(self.get_temp()))
+
+        # logging.debug(self.tempList)
+
         pass
 
     def run(self):
         while True:
-            # print "putting temp in queue"
             try:
-                self.queue.put({'sensor': self.get_temp()})
+                self.tempList.append(self.get_temp())
+                self.tempList = self.tempList[len(self.tempList)-10:]
+                tempAverage = reduce(lambda x, y: x + y, self.tempList) / len(self.tempList)
+                self.queue.put({'sensor': tempAverage})
+                # logging.debug("putting temp in queue {0}".format(tempAverage))
+                # logging.debug(self.tempList)
             except Exception as ex:
                 logging.warning(ex)
             time.sleep(10)
