@@ -117,7 +117,7 @@ while True:
             data = wfile.read()
             wfile.close()
             temp = string.rsplit(data, '=', 1)[1]
-            q.put('2|SENSOR|{0}|{1}|{2}'.format(datetime.datetime.now(), sensor, temp))
+            q.put('3|SENSOR|{0}|{1}'.format(sensor, temp))
     else:
         # q.put("1|PASS")
         pass
