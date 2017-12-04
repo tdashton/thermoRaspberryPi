@@ -70,36 +70,10 @@ class threadedClient (threading.Thread):
     def open_socket(self, addr, port):
         if self.wsock is None:
             print "connecting to {0} port {1}".format(addr, port)
-            self.create_socket(addr, port)
+            self.wsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.wsock.connect((addr, port))
         else:
             print "already connected to {0} port {1}".format(addr, port)
-
-    def create_socket(self, addr, port):
-        print "connecting to worker {0} port {1}".format(addr, port)
-        wokerPort = self.negotiate_connection(addr, port)
-        # time.sleep(1)
-        self.wsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.wsock.connect((addr, wokerPort))
-
-    def negotiate_connection(self, addr, port):
-        try:
-            #create an AF_INET, STREAM socket (TCP)
-            negotiateSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            negotiateSocket.connect((addr, port))
-            negotiateSocket.send("CONNECT LOG\n\n")
-            data = negotiateSocket.recv(128)
-            parsed = string.split(data, "\n")
-            logging.debug(parsed)
-            portString = string.split(parsed[1], ":")
-            port = int(portString[1])
-            logging.debug("asked to connect to port {0}".format(port))
-            negotiateSocket.close()
-            return port
-
-        except socket.error, msg:
-            print 'Failed to create socket. Error code: ' + str(msg[0]) + ' , Error message : ' + msg[1]
-            sys.exit()
-
 
 q = Queue.Queue()
 client = threadedClient(q)
