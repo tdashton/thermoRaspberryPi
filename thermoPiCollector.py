@@ -18,7 +18,7 @@ serverThreads = []
 
 serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 serverSocket.bind((HOST, MAIN_PORT))
-logging.basicConfig(filename='collector.log', level=logging.DEBUG)
+logging.basicConfig(filename='collector.log', level=logging.DEBUG, format='%(asctime)s %(message)s')
 
 '''
 for the main server

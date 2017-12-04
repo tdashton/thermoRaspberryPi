@@ -24,7 +24,7 @@ sensors = []
 for sensor in sensorsConfig:
     sensors.append(sensor[1])
 
-logging.basicConfig(filename='client.log', level=logging.DEBUG)
+logging.basicConfig(filename='client.log', level=logging.DEBUG, format='%(asctime)s %(message)s')
 
 
 class threadedClient (threading.Thread):

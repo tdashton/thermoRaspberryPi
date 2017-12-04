@@ -26,7 +26,7 @@ GPIO.setwarnings(False)  # DEBUG_GPIO
 
 serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 serverSocket.bind((HOST, MAIN_PORT))
-logging.basicConfig(filename='controller.log', level=logging.DEBUG)
+logging.basicConfig(filename='controller.log', level=logging.DEBUG, format='%(asctime)s %(message)s')
 stringStatus = "STATUS:{0} {1}"
 
 w1_path = "/sys/bus/w1/devices/{0}/w1_slave"  # DEBUG_GPIO
