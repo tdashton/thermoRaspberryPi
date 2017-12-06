@@ -19,7 +19,7 @@ def connectToDatasource(connectionId):
 
 
 def writeToDatasource(connectionId, temp=0, date=datetime.datetime.now(), sensorName='unknown'):
-    connectToDatasource()
+    connectToDatasource(connectionId)
     fileHandle.write(
         "INSERT INTO log (value, datetime, fk_sensor) VALUES ({0}, '{1}', '{2}')"
         .format(temp, date, sensorName))
