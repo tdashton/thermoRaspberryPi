@@ -42,6 +42,7 @@ class threadedServer (threading.Thread):
     def __init__(self, socket, addr, threadNumber=None):
         threading.Thread.__init__(self)
         self.serverSocket = socket
+        self.serverSocket.settimeout(120)
         self.addr = addr
         if threadNumber is not None:
             self.threadNumber = threadNumber
@@ -58,13 +59,23 @@ class threadedServer (threading.Thread):
 
         #  TODO non blocking: https://docs.python.org/2/howto/sockets.html#non-blocking-sockets
         logging.debug("waiting for mode")
-        mode = self.serverSocket.recv(128)
+        try:
+            mode = self.serverSocket.recv(128)
+        except socket.timeout as msg:
+            logging.info(msg)
+            self.tear_down()
+            return
 
         logging.debug("set mode:{0}".format(mode.strip()))
         self.serverSocket.send("ACK:{0}".format(mode.strip()))
 
         while True:
-            data = self.serverSocket.recv(1024)
+            try:
+                data = self.serverSocket.recv(1024)
+            except socket.timeout as msg:
+                logging.info(msg)
+                break
+
             # logging.debug(data)
             parsed = string.split(data, '|')
             parsed[-1] = parsed[-1].strip()
