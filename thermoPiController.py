@@ -16,8 +16,8 @@ config.read('config/controller.cfg')
 HOST = config.get('network', 'host')  # Symbolic name meaning all available interfaces
 MAIN_PORT = config.getint('network', 'port')  # Arbitrary non-privileged port for connection
 
-RUNOUT_HEAT_TIME = 2 * 60  # time to run the thermostat after the TEMP has been reached
-DEFAULT_TEMP = 17 * 1000
+RUNOUT_HEAT_TIME = config.getint('main', 'runout_seconds')  # time to run the thermostat after the TEMP has been reached
+DEFAULT_TEMP = config.getint('main', 'default_temperature')
 
 BCIM_ID = config.getint('main', 'bcim_id')
 GPIO.setmode(GPIO.BCM)  # DEBUG_GPIO
