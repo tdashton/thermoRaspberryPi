@@ -103,6 +103,7 @@ class threadedServer (threading.Thread):
                     pass
             elif parsed[0] == '3':
                 # proto version 3
+                # 3|SENSOR|name|17000
                 payloadType = parsed[1]
                 if payloadType == 'SENSOR':
                     timestamp = datetime.datetime.now()
