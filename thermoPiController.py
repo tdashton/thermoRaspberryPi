@@ -16,6 +16,7 @@ config.read('config/controller.cfg')
 HOST = config.get('network', 'host')  # Symbolic name meaning all available interfaces
 MAIN_PORT = config.getint('network', 'port')  # Arbitrary non-privileged port for connection
 
+RUNNER_LOOP_SLEEP = 0.5
 RUNOUT_HEAT_TIME = config.getint('main', 'runout_seconds')  # time to run the thermostat after the TEMP has been reached
 DEFAULT_TEMP = config.getint('main', 'default_temperature')
 
@@ -105,10 +106,10 @@ class thermostatRunner(threading.Thread):
                 toggle_gpio(BCIM_ID, True, self.running)
                 self.set_running(True)
                 if self.requestedTimeRunning <= self.requestedTime:
-                    if self.runningTime % 10 == 0:
+                    if self.runningTime % (10 / RUNNER_LOOP_SLEEP) == 0:
                         logging.debug("heating while {0} < {1}".format(self.requestedTimeRunning, self.requestedTime))
-                    self.requestedTimeRunning = self.requestedTimeRunning + 1
-                    if self.requestedTimeRunning == self.requestedTime:
+                    self.requestedTimeRunning = self.requestedTimeRunning + (1 * RUNNER_LOOP_SLEEP)
+                    if self.requestedTimeRunning >= self.requestedTime:
                         self.requestedTime = self.requestedTimeRunning = 0
                         if self.currentTemp > self.requestedTemp:
                             # this extra condition is to avoid turning off the switch and then
@@ -130,9 +131,9 @@ class thermostatRunner(threading.Thread):
                         logging.debug("setting runout time")
                         self.requestedTime = RUNOUT_HEAT_TIME
 
-            time.sleep(0.4)
+            time.sleep(RUNNER_LOOP_SLEEP)
             if self.running is True:
-                self.runningTime = self.runningTime + 1
+                self.runningTime = self.runningTime + (1 * RUNNER_LOOP_SLEEP)
                 # logging.debug("running time {0}".format(self.runningTime))
 
         toggle_gpio(BCIM_ID, False, self.running)
