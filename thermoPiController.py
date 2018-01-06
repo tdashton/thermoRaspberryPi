@@ -130,7 +130,7 @@ class thermostatRunner(threading.Thread):
                         logging.debug("setting runout time")
                         self.requestedTime = RUNOUT_HEAT_TIME
 
-            time.sleep(1)
+            time.sleep(0.4)
             if self.running is True:
                 self.runningTime = self.runningTime + 1
                 # logging.debug("running time {0}".format(self.runningTime))
