@@ -7,7 +7,7 @@ import logging
 import socket
 import string
 import threading
-import collectorMysql
+import collectorSqlite3
 import Queue
 
 HOST = ''                 # Symbolic name meaning all available interfaces
@@ -86,8 +86,8 @@ class threadedServer (threading.Thread):
                     timestamp = parsed[2]
                     sensorName = parsed[3]
                     temp = parsed[4]
-                    collectorMysql.connectToDatasource(self.addr[1])
-                    collectorMysql.writeToDatasource(self.addr[1], temp, timestamp, sensorName)
+                    collectorSqlite3.connectToDatasource(self.addr[1])
+                    collectorSqlite3.writeToDatasource(self.addr[1], temp, timestamp, sensorName)
                 else:
                     # logging.debug("it is a pass")
                     pass
@@ -98,7 +98,7 @@ class threadedServer (threading.Thread):
                     timestamp = parsed[2]
                     sensorName = parsed[3]
                     temp = parsed[4]
-                    collectorMysql.writeToDatasource(self.addr[1], temp, timestamp, sensorName)
+                    collectorSqlite3.writeToDatasource(self.addr[1], temp, timestamp, sensorName)
                 else:
                     pass
             elif parsed[0] == '3':
@@ -108,7 +108,7 @@ class threadedServer (threading.Thread):
                     timestamp = datetime.datetime.now()
                     sensorName = parsed[2]
                     temp = parsed[3]
-                    collectorMysql.writeToDatasource(self.addr[1], temp, timestamp, sensorName)
+                    collectorSqlite3.writeToDatasource(self.addr[1], temp, timestamp, sensorName)
                 else:
                     pass
 
