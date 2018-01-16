@@ -160,7 +160,8 @@ class thermostatRunner(threading.Thread):
 
 '''
 get the temperature, we do this in its own thread because reading the
-sensors can introduce a delay into the thermostatRunner.
+sensors can introduce a delay into the thermostatRunner. The temperature
+must stay constant for at least a minute before it is reported.
 '''
 
 
@@ -185,13 +186,13 @@ class sensorRunner(threading.Thread):
             try:
                 self.tempList.append(self.get_temp())
                 self.tempList = self.tempList[len(self.tempList)-10:]
-                tempAverage = reduce(lambda x, y: x + y, self.tempList) / len(self.tempList)
-                self.queue.put({'sensor': tempAverage})
-                # logging.debug("putting temp in queue {0}".format(tempAverage))
+                runnerTemp = max(self.tempList)
+                self.queue.put({'sensor': runnerTemp})
+                # logging.debug("putting temp in queue {0}".format(runnerTemp))
                 # logging.debug(self.tempList)
             except Exception as ex:
                 logging.warning(ex)
-            time.sleep(10)
+            time.sleep(60/10)
 
     def get_temp(self):
         if os.path.exists(w1_path.format(sensor)) is False:
