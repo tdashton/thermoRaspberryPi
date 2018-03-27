@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import ConfigParser
+import datetime
 import logging
 import RPi.GPIO as GPIO  # DEBUG_GPIO
 import os.path
@@ -48,6 +49,7 @@ class thermostatRunner(threading.Thread):
     commandQueue = None
     currentTemp = None
     requestedTemp = None
+    beginningOfWeek = get_beginning_of_week()
     requestedTime = 0
     requestedTimeRunning = 0
     # keep track of whether the gpio pin is toggled or not
@@ -208,6 +210,15 @@ class sensorRunner(threading.Thread):
 '''
 for the main server
 '''
+
+
+def get_beginning_of_week():
+    # >>> datex = datetime.datetime.now()
+    # >>> datex
+    # datetime.datetime(2018, 3, 27, 20, 5, 22, 72624)
+    # >>> datex.weekday()
+    # 1
+    return datetime.datetime.fromtimestamp(time.time() - (datetime.datetime.now().hour * 60 * 60 + datetime.datetime.now().time().minute * 60 + datetime.datetime.now().time().second))
 
 
 def init_server_socket():
