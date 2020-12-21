@@ -87,11 +87,15 @@ while True:
             # 24 00 4b 46 ff ff 0e 10 3d : crc=3d YES
             # 24 00 4b 46 ff ff 0e 10 3d t=17875
             # data = "24 00 4b 46 ff ff 0e 10 3d t=17875"
-            wfile = open(w1_path.format(sensor), 'r')
-            data = wfile.read()
-            wfile.close()
-            temp = string.rsplit(data, '=', 1)[1]
-            q.put('3|SENSOR|{0}|{1}'.format(sensor, temp))
+            try:
+                wfile = open(w1_path.format(sensor), 'r')
+                data = wfile.read()
+                wfile.close()
+                temp = string.rsplit(data, '=', 1)[1]
+                q.put('3|SENSOR|{0}|{1}'.format(sensor, temp))
+            except IOError as ioe:
+                print("Error polling '{0}': '{1}'".format(sensor, ioe))
+
     else:
         # q.put("1|PASS")
         pass
