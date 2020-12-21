@@ -3,6 +3,7 @@
 import ConfigParser
 import datetime
 import logging
+import os
 import Queue
 import socket
 import string
@@ -71,7 +72,10 @@ class threadedClient (threading.Thread):
         if self.wsock is None:
             print "connecting to {0} port {1}".format(addr, port)
             self.wsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.wsock.connect((addr, port))
+            try:
+                self.wsock.connect((addr, port))
+            except:
+                os._exit(1)
         else:
             print "already connected to {0} port {1}".format(addr, port)
 
