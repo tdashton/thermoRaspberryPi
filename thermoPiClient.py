@@ -95,10 +95,17 @@ while True:
                 wfile = open(w1_path.format(sensor), 'r')
                 data = wfile.read()
                 wfile.close()
-                temp = string.rsplit(data, '=', 1)[1]
-                q.put('3|SENSOR|{0}|{1}'.format(sensor, temp))
+                if string.find(data, '=') != -1:
+                    temp = string.rsplit(data, '=', 1)[1]
+                    q.put('3|SENSOR|{0}|{1}'.format(sensor, temp))
+                else:
+                    raise IndexError('Data in unexpected format')
             except IOError as ioe:
+                logging.warning("Error polling '{0}': '{1}'".format(sensor, ioe))
                 print("Error polling '{0}': '{1}'".format(sensor, ioe))
+            except IndexError as ie:
+                logging.warning("Error parsing '{0}': '{1}'".format(sensor, ie))
+                print("Error parsing '{0}': '{1}'".format(sensor, ie))
 
     else:
         # q.put("1|PASS")
