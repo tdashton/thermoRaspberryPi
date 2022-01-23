@@ -85,6 +85,10 @@ client.start()
 
 i = 0
 while True:
+    if i % 30 == 0:
+        logging.debug('sending heartbeat')
+        q.put('3|KEEPALIVE')
+
     if i == 0:
         i = 0
         for sensor in sensors:

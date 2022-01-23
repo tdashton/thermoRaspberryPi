@@ -64,6 +64,7 @@ class threadedServer (threading.Thread):
         except socket.timeout as msg:
             logging.info(msg)
             self.tear_down()
+            logging.debug("got socket timeout")
             return
 
         logging.debug("set mode:{0}".format(mode.strip()))
@@ -110,6 +111,9 @@ class threadedServer (threading.Thread):
                     sensorName = parsed[2]
                     temp = parsed[3]
                     collectorMysql.writeToDatasource(self.addr[1], temp, timestamp, sensorName)
+                elif payloadType == 'KEEPALIVE':
+                    # logging.debug("Keepalive")
+                    pass
                 else:
                     pass
 
